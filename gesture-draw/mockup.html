@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gesture Draw - Interactive Mockup</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Avenir Next", Avenir, Futura, "Trebuchet MS", sans-serif;
+      background: #000;
+      color: #fff;
+      --bg: #000;
+      --text: #fff;
+      --panel: #111;
+      --panel-2: #0a0a0a;
+      --border: #2a2a2a;
+      --muted: #b0b0b0;
+      --accent: #fff;
+      --danger: #fff;
+    }
+
+    * { box-sizing: border-box; border-radius: 0 !important; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    body[data-theme="light"] {
+      color-scheme: light;
+      --bg: #ffffff;
+      --text: #000;
+      --panel: #ffffff;
+      --panel-2: #f0f0f0;
+      --border: #d2d2d2;
+      --muted: #4a4a4a;
+      --accent: #000;
+      --danger: #000;
+    }
+
+    .app {
+      min-height: 100vh;
+      padding: 20px 24px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    body[data-screen="session"] .app {
+      padding: 0;
+      gap: 0;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+    }
+
+    body[data-screen="session"] .topbar {
+      display: none;
+    }
+
+    .brand {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      background: var(--text);
+      color: var(--bg);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+    }
+
+    .brand-title { font-weight: 700; font-size: 18px; }
+    .brand-sub { color: var(--muted); font-size: 12px; }
+
+    .topbar-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .primary {
+      background: var(--text);
+      color: var(--bg);
+      border: 1px solid var(--text);
+    }
+
+    .ghost {
+      background: transparent;
+      color: var(--text);
+    }
+
+    .danger {
+      background: var(--text);
+      color: var(--bg);
+      border: 1px solid var(--text);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 2.2fr) minmax(280px, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 20px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    h2 { margin: 0; font-size: 20px; }
+
+    .chip {
+      border: 1px solid var(--border);
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .folder-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+
+    .input-wrap label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="range"],
+    input:not([type]) {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      font: inherit;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 14px;
+      max-height: 420px;
+      overflow-y: auto;
+      padding-right: 6px;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+
+    .thumb {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .thumb.omitted { opacity: 0.45; }
+
+    .thumb img {
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+      border: 1px solid var(--border);
+    }
+
+    .thumb-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .thumb-title { font-weight: 600; font-size: 13px; }
+    .thumb-sub { font-size: 11px; color: var(--muted); }
+
+    .checkbox {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .settings {
+      position: sticky;
+      top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .setting-block label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .slider-row .value { font-weight: 600; }
+
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0;
+      border: none;
+      width: fit-content;
+    }
+
+    .stepper button {
+      width: 26px;
+      height: 26px;
+      padding: 0;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .preview-card {
+      border: none;
+      padding: 0;
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+    }
+
+    .full { width: 100%; justify-content: center; }
+
+    .session {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: var(--bg);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    .session-frame {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .session-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: var(--bg);
+    }
+
+    .session-overlay {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.78);
+      border-top: 1px solid var(--border);
+    }
+
+    body[data-theme="light"] .session-overlay {
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .timer-block {
+      font-size: 16px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .timer-value { font-size: 22px; font-weight: 700; }
+    .timer-sub { font-size: 12px; color: var(--muted); }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .summary {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 60vh;
+    }
+
+    .summary-card {
+      max-width: 840px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .summary-card p { color: var(--muted); }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .summary-images {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+      margin-top: 16px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .summary-images img {
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+      border: 1px solid var(--border);
+    }
+
+    .hidden { display: none; }
+
+    @media (max-width: 1024px) {
+      .layout { grid-template-columns: 1fr; }
+      .settings { position: static; }
+    }
+
+    @media (max-width: 720px) {
+      .topbar { flex-direction: column; align-items: flex-start; }
+      .summary-grid { grid-template-columns: 1fr; }
+      .folder-row { grid-template-columns: 1fr; }
+      .controls { flex-direction: column; align-items: flex-end; }
+      .session-overlay { flex-direction: column; gap: 10px; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body data-screen="setup" data-theme="dark">
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">GD</div>
+        <div>
+          <div class="brand-title">Gesture Draw</div>
+          <div class="brand-sub">Timed figure drawing sessions</div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="ghost" id="nav-setup">Setup</button>
+        <button class="ghost" id="nav-session" disabled>Session</button>
+        <button class="ghost" id="nav-summary" disabled>Summary</button>
+        <button class="ghost" id="theme-toggle">Light mode</button>
+      </div>
+    </header>
+
+    <main id="screen-setup" class="layout">
+      <section class="panel hero">
+        <div class="panel-header">
+          <h2>Source Library</h2>
+          <span class="chip" id="active-count">24 active</span>
+        </div>
+        <div class="folder-row">
+          <div class="input-wrap">
+            <label>Folder</label>
+            <input type="text" id="folder-input" value="/Users/jess/Projects/26-01 Figure Drawing/Gestures" />
+          </div>
+          <button class="primary" id="choose-folder">Choose Folder</button>
+        </div>
+        <div class="grid" id="image-grid"></div>
+      </section>
+
+      <aside class="panel settings">
+        <div class="panel-header">
+          <h2>Session Settings</h2>
+          <span class="chip">Preview</span>
+        </div>
+
+        <div class="setting-block">
+          <label>Time Per Image</label>
+          <div class="slider-row">
+            <input type="range" id="minutes" min="1" max="15" value="3" />
+            <span class="value" id="minutes-value">3 min</span>
+          </div>
+        </div>
+
+        <div class="setting-block">
+          <label>Images Per Session</label>
+          <div class="stepper">
+            <button id="count-minus">-</button>
+            <span id="count-value">8</span>
+            <button id="count-plus">+</button>
+          </div>
+          <label class="toggle-row">
+            <input type="checkbox" id="infinite" />
+            Infinite until I stop
+          </label>
+        </div>
+
+        <div class="setting-block">
+          <label>Session Preview</label>
+          <div class="preview-card" id="preview">
+            <div>Active images: 24</div>
+            <div>Target: 8 images</div>
+            <div>Timer: 3 min each</div>
+          </div>
+        </div>
+
+        <button class="primary full" id="start-session">Start Session</button>
+      </aside>
+    </main>
+
+    <main id="screen-session" class="session hidden">
+      <div class="session-frame">
+        <img id="active-image" alt="Active pose" />
+      </div>
+      <div class="session-overlay">
+        <div class="timer-block">
+          <div class="timer-value" id="timer">03:00</div>
+          <div class="timer-sub" id="image-name">Pose 01</div>
+        </div>
+        <div class="controls">
+          <button class="ghost" id="prev">Previous</button>
+          <button class="primary" id="pause">Pause</button>
+          <button class="ghost" id="next">Next</button>
+          <button class="ghost" id="skip">Skip</button>
+          <button class="danger" id="stop">Stop</button>
+        </div>
+      </div>
+    </main>
+
+    <main id="screen-summary" class="summary hidden">
+      <section class="panel summary-card">
+        <h2>Session Summary</h2>
+        <p>Here are the drawings you completed this session.</p>
+        <div class="summary-grid">
+          <div>
+            <div class="stat-number" id="sum-completed">0</div>
+            <div class="stat-label">Completed Drawings</div>
+          </div>
+          <div>
+            <div class="stat-number" id="sum-skipped">0</div>
+            <div class="stat-label">Skipped</div>
+          </div>
+          <div>
+            <div class="stat-number" id="sum-minutes">3 min</div>
+            <div class="stat-label">Per Image</div>
+          </div>
+        </div>
+        <div class="summary-images" id="summary-images"></div>
+        <div class="summary-actions" style="margin-top:16px; display:flex; gap:10px; justify-content:center;">
+          <button class="ghost" id="back-setup">Back to Setup</button>
+          <button class="primary" id="start-again">Start Another Session</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const COLORS = [
+      ['#222', '#444'],
+      ['#111', '#333'],
+      ['#1a1a1a', '#3a3a3a'],
+      ['#2a2a2a', '#4a4a4a'],
+      ['#151515', '#353535'],
+      ['#202020', '#404040']
+    ];
+
+    function makePlaceholder(label, colorA, colorB) {
+      const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
+  <rect width="900" height="1200" fill="${colorA}"/>
+  <rect x="70" y="80" width="760" height="1040" fill="${colorB}" stroke="${colorB}"/>
+  <text x="80" y="170" font-family="Avenir Next, Avenir, Futura, sans-serif" font-size="48" fill="#e0e0e0">${label}</text>
+  <text x="80" y="240" font-family="Avenir Next, Avenir, Futura, sans-serif" font-size="20" fill="#b0b0b0">Gesture Reference</text>
+</svg>`;
+      return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+    }
+
+    const images = Array.from({ length: 24 }).map((_, index) => {
+      const [colorA, colorB] = COLORS[index % COLORS.length];
+      const name = `Pose ${String(index + 1).padStart(2, '0')}`;
+      return {
+        id: `img-${index + 1}`,
+        name,
+        src: makePlaceholder(name, colorA, colorB),
+        omitted: false,
+        drawn: Math.floor(Math.random() * 8)
+      };
+    });
+
+    let minutes = 3;
+    let count = 8;
+    let infinite = false;
+    let session = null;
+    let timerId = null;
+    let theme = localStorage.getItem('gd-theme') || document.body.dataset.theme || 'dark';
+
+    const $ = (id) => document.getElementById(id);
+
+    const screenSetup = $('screen-setup');
+    const screenSession = $('screen-session');
+    const screenSummary = $('screen-summary');
+
+    const grid = $('image-grid');
+    const activeCount = $('active-count');
+    const preview = $('preview');
+
+    const timer = $('timer');
+    const imageName = $('image-name');
+    const activeImage = $('active-image');
+    const summaryImages = $('summary-images');
+    const themeToggle = $('theme-toggle');
+
+    function applyTheme(nextTheme) {
+      theme = nextTheme;
+      document.body.dataset.theme = theme;
+      localStorage.setItem('gd-theme', theme);
+      const label = theme === 'dark' ? 'Light mode' : 'Dark mode';
+      if (themeToggle) themeToggle.textContent = label;
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function updateStats() {
+      const omitted = images.filter((img) => img.omitted).length;
+      const included = images.length - omitted;
+      activeCount.textContent = `${included} active`;
+      preview.innerHTML = `
+        <div>Active images: ${included}</div>
+        <div>Target: ${infinite ? 'Infinite' : `${count} images`}</div>
+        <div>Timer: ${minutes} min each</div>
+      `;
+    }
+
+    function renderGrid() {
+      grid.innerHTML = '';
+      images.forEach((img) => {
+        const card = document.createElement('div');
+        card.className = `thumb ${img.omitted ? 'omitted' : ''}`;
+        card.innerHTML = `
+          <img src="${img.src}" alt="${img.name}" />
+          <div class="thumb-meta">
+            <div>
+              <div class="thumb-title">${img.name}</div>
+              <div class="thumb-sub">Drawn ${img.drawn}x</div>
+            </div>
+            <label class="checkbox">
+              <input type="checkbox" ${img.omitted ? '' : 'checked'} />
+            </label>
+          </div>
+        `;
+        card.querySelector('input').addEventListener('change', (e) => {
+          img.omitted = !e.target.checked;
+          renderGrid();
+          updateStats();
+        });
+        grid.appendChild(card);
+      });
+    }
+
+    function setScreen(name) {
+      document.body.dataset.screen = name;
+      screenSetup.classList.toggle('hidden', name !== 'setup');
+      screenSession.classList.toggle('hidden', name !== 'session');
+      screenSummary.classList.toggle('hidden', name !== 'summary');
+    }
+
+    function pickRandomIncluded() {
+      const pool = images.filter((img) => !img.omitted);
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function buildSequence() {
+      const pool = images.filter((img) => !img.omitted);
+      const shuffled = [...pool].sort(() => Math.random() - 0.5);
+      if (infinite) return [shuffled[0]];
+      if (count <= shuffled.length) return shuffled.slice(0, count);
+      const seq = [...shuffled];
+      while (seq.length < count) {
+        seq.push(pickRandomIncluded());
+      }
+      return seq;
+    }
+
+    function updateSessionView() {
+      if (!session) return;
+      const current = session.sequence[session.index];
+      activeImage.src = current.src;
+      imageName.textContent = current.name;
+      timer.textContent = formatTime(session.remainingSec);
+    }
+
+    function tick() {
+      if (!session || session.status !== 'running') return;
+      if (session.remainingSec > 1) {
+        session.remainingSec -= 1;
+        updateSessionView();
+        return;
+      }
+      advance(true);
+    }
+
+    function startTimer() {
+      if (timerId) clearInterval(timerId);
+      timerId = setInterval(tick, 1000);
+    }
+
+    function stopTimer() {
+      if (timerId) clearInterval(timerId);
+      timerId = null;
+    }
+
+    function startSession() {
+      const included = images.filter((img) => !img.omitted);
+      if (!included.length) return;
+      session = {
+        status: 'running',
+        sequence: buildSequence(),
+        index: 0,
+        remainingSec: minutes * 60,
+        completed: 0,
+        skipped: 0,
+        completedImages: [],
+        target: infinite ? 'infinite' : count
+      };
+      updateSessionView();
+      setScreen('session');
+      $('nav-session').disabled = false;
+      $('nav-summary').disabled = false;
+      startTimer();
+    }
+
+    function renderSummaryImages() {
+      summaryImages.innerHTML = '';
+      if (!session) return;
+      session.completedImages.forEach((img) => {
+        const el = document.createElement('img');
+        el.src = img.src;
+        el.alt = img.name;
+        summaryImages.appendChild(el);
+      });
+    }
+
+    function advance(countCurrent) {
+      if (!session) return;
+      const current = session.sequence[session.index];
+      if (countCurrent) {
+        current.drawn += 1;
+        session.completed += 1;
+        session.completedImages.push(current);
+      } else {
+        session.skipped += 1;
+      }
+
+      if (session.target !== 'infinite' && session.completed >= session.target) {
+        stopTimer();
+        $('sum-completed').textContent = session.completed;
+        $('sum-skipped').textContent = session.skipped;
+        $('sum-minutes').textContent = `${minutes} min`;
+        renderGrid();
+        updateStats();
+        renderSummaryImages();
+        setScreen('summary');
+        return;
+      }
+
+      session.index += 1;
+      if (session.index >= session.sequence.length) {
+        session.sequence.push(pickRandomIncluded());
+      }
+      session.remainingSec = minutes * 60;
+      updateSessionView();
+    }
+
+    $('minutes').addEventListener('input', (e) => {
+      minutes = Number(e.target.value);
+      $('minutes-value').textContent = `${minutes} min`;
+      updateStats();
+    });
+
+    $('count-minus').addEventListener('click', () => {
+      count = Math.max(2, count - 1);
+      $('count-value').textContent = count;
+      updateStats();
+    });
+
+    $('count-plus').addEventListener('click', () => {
+      count = Math.min(20, count + 1);
+      $('count-value').textContent = count;
+      updateStats();
+    });
+
+    $('infinite').addEventListener('change', (e) => {
+      infinite = e.target.checked;
+      updateStats();
+    });
+
+    $('start-session').addEventListener('click', startSession);
+    $('start-again').addEventListener('click', startSession);
+
+    $('prev').addEventListener('click', () => {
+      if (!session || session.index === 0) return;
+      session.index -= 1;
+      session.remainingSec = minutes * 60;
+      updateSessionView();
+    });
+
+    $('next').addEventListener('click', () => advance(true));
+    $('skip').addEventListener('click', () => advance(false));
+
+    $('pause').addEventListener('click', () => {
+      if (!session) return;
+      session.status = session.status === 'running' ? 'paused' : 'running';
+      $('pause').textContent = session.status === 'running' ? 'Pause' : 'Resume';
+      if (session.status === 'running') startTimer(); else stopTimer();
+    });
+
+    $('stop').addEventListener('click', () => {
+      stopTimer();
+      if (!session) return;
+      $('sum-completed').textContent = session.completed;
+      $('sum-skipped').textContent = session.skipped;
+      $('sum-minutes').textContent = `${minutes} min`;
+      renderSummaryImages();
+      setScreen('summary');
+    });
+
+    $('back-setup').addEventListener('click', () => {
+      stopTimer();
+      session = null;
+      setScreen('setup');
+    });
+
+    $('nav-setup').addEventListener('click', () => setScreen('setup'));
+    $('nav-session').addEventListener('click', () => setScreen('session'));
+    $('nav-summary').addEventListener('click', () => setScreen('summary'));
+    if (themeToggle) {
+      themeToggle.addEventListener('click', () => {
+        applyTheme(theme === 'dark' ? 'light' : 'dark');
+      });
+    }
+
+    applyTheme(theme);
+    renderGrid();
+    updateStats();
+    updateSessionView();
+  </script>
+</body>
+</html>
