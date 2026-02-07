@@ -94,9 +94,10 @@ struct SetupView: View {
             }
             .padding(.top, 8)
           }
+          .padding(.trailing, -12)
           .thinScrollIndicators()
           .frame(maxHeight: .infinity)
-          .padding(.trailing, -8)
+          .padding(.trailing, 12)
         }
       }
       .padding(20)
@@ -160,17 +161,6 @@ struct SetupView: View {
               model.infinite.toggle()
             }
           }
-        }
-
-        Divider()
-
-        VStack(alignment: .leading, spacing: 10) {
-          Text("Additional Settings")
-            .font(.system(size: 13, weight: .semibold))
-          Toggle("Prioritize lesser-drawn images", isOn: $model.prioritizeLowDraw)
-            .toggleStyle(.checkbox)
-            .tint(Color(white: 0.6))
-            .accentColor(Color(white: 0.6))
         }
 
         Spacer()
@@ -325,14 +315,40 @@ struct NoSelectTextField: NSViewRepresentable {
 
 struct ThumbnailView: View {
   let path: String
+  @State private var image: NSImage? = nil
 
   var body: some View {
-    if let image = NSImage(contentsOfFile: path) {
-      Image(nsImage: image)
-        .resizable()
-        .scaledToFit()
-    } else {
-      Color.clear
+    Group {
+      if let image {
+        Image(nsImage: image)
+          .resizable()
+          .scaledToFit()
+      } else {
+        Color.clear
+      }
+    }
+    .onAppear {
+      loadImage()
+    }
+    .onChange(of: path) { _ in
+      loadImage()
+    }
+  }
+
+  private func loadImage() {
+    if let cached = ImageCache.shared.image(for: path) {
+      image = cached
+      return
+    }
+
+    DispatchQueue.global(qos: .userInitiated).async {
+      let loaded = NSImage(contentsOfFile: path)
+      if let loaded {
+        ImageCache.shared.set(loaded, for: path)
+      }
+      DispatchQueue.main.async {
+        image = loaded
+      }
     }
   }
 }

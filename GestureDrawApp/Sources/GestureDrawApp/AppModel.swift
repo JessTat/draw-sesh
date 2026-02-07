@@ -75,6 +75,7 @@ final class AppModel: ObservableObject {
   }
 
   func adjustCount(_ value: Int) {
+    infinite = false
     count = min(20, max(2, value))
   }
 
@@ -331,6 +332,11 @@ final class AppModel: ObservableObject {
 
   func clearHistory() {
     history = []
+    saveHistory()
+  }
+
+  func deleteHistoryLog(id: UUID) {
+    history.removeAll { $0.id == id }
     saveHistory()
   }
 

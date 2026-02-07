@@ -10,6 +10,7 @@ struct SessionView: View {
   @State private var mouseMonitor: Any?
   @State private var lastMouseMove: Date = Date()
   @State private var controlsVisible: Bool = true
+  @State private var cursorHidden: Bool = false
 
   var body: some View {
     ZStack(alignment: .bottom) {
@@ -149,19 +150,31 @@ struct SessionView: View {
       NSEvent.removeMonitor(monitor)
       mouseMonitor = nil
     }
+    if cursorHidden {
+      NSCursor.unhide()
+      cursorHidden = false
+    }
   }
 
   private func registerMouseMove() {
     lastMouseMove = Date()
+    if cursorHidden {
+      NSCursor.unhide()
+      cursorHidden = false
+    }
     if !controlsVisible {
       controlsVisible = true
     }
   }
 
   private func updateControlsVisibility() {
-    if Date().timeIntervalSince(lastMouseMove) > 3 {
+    if Date().timeIntervalSince(lastMouseMove) > 2 {
       if controlsVisible {
         controlsVisible = false
+        if !cursorHidden {
+          NSCursor.hide()
+          cursorHidden = true
+        }
       }
     }
   }
@@ -200,25 +213,59 @@ private struct ActionButton: View {
   let action: () -> Void
 
   var body: some View {
-    VStack(spacing: 4) {
-      Keycap(label: keyLabel, palette: palette)
-      BWButton(title: title) {
-        action()
-      }
+    SessionControlButton(title: title, keyLabel: keyLabel, palette: palette) {
+      action()
     }
   }
 }
 
-private struct Keycap: View {
+private struct SessionControlButton: View {
+  let title: String
+  let keyLabel: String
+  let palette: Palette
+  let action: () -> Void
+
+  @Environment(\.colorScheme) private var scheme
+  @State private var isHovering = false
+
+  var body: some View {
+    let baseFill = Color.clear
+    let foreground = scheme == .dark ? Color(white: 0.9) : Color.black
+    let stroke = scheme == .dark ? Color(white: 0.2) : Color(white: 0.7)
+    let hoverOverlay = scheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06)
+
+    Button(action: action) {
+      VStack(spacing: 4) {
+        InlineKeycap(label: keyLabel, palette: palette)
+        Text(title)
+          .font(.system(size: 13, weight: .medium))
+          .foregroundStyle(foreground)
+      }
+      .frame(minHeight: 28)
+      .padding(.vertical, 6)
+      .padding(.horizontal, 12)
+      .background(baseFill)
+      .overlay(Rectangle().fill(hoverOverlay).opacity(isHovering ? 1 : 0).allowsHitTesting(false))
+      .overlay(Rectangle().stroke(stroke, lineWidth: 1).allowsHitTesting(false))
+    }
+    .buttonStyle(.plain)
+    .onHover { hovering in
+      isHovering = hovering
+    }
+  }
+}
+
+private struct InlineKeycap: View {
   let label: String
   let palette: Palette
 
   var body: some View {
     Text(label)
-      .font(.system(size: 9, weight: .semibold))
+      .font(.system(size: 8, weight: .semibold))
       .foregroundStyle(palette.muted)
       .padding(.horizontal, 4)
-      .padding(.vertical, 2)
+      .padding(.vertical, 1)
+      .background(palette.panelAlt)
       .overlay(Rectangle().stroke(palette.border, lineWidth: 1))
   }
 }

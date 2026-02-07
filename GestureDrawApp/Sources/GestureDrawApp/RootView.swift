@@ -5,11 +5,13 @@ enum Screen: String, CaseIterable {
   case setup = "Setup"
   case session = "Session"
   case history = "History"
+  case settings = "Settings"
 }
 
 struct RootView: View {
   @StateObject private var model = AppModel()
   @AppStorage("gd-theme") private var themeRawValue: String = AppTheme.dark.rawValue
+  @State private var globalKeyMonitor: Any?
 
   private var theme: AppTheme {
     AppTheme(rawValue: themeRawValue) ?? .dark
@@ -22,7 +24,7 @@ struct RootView: View {
   var body: some View {
     VStack(spacing: 0) {
       if model.screen != .session {
-        TopBar(screen: $model.screen, theme: theme, palette: palette, onToggleTheme: toggleTheme)
+        TopBar(screen: $model.screen, palette: palette)
           .padding(.horizontal, 20)
           .padding(.top, 16)
           .padding(.bottom, 12)
@@ -38,6 +40,8 @@ struct RootView: View {
           SessionView(model: model, palette: palette)
         case .history:
           HistoryView(model: model, palette: palette)
+        case .settings:
+          SettingsView(model: model, palette: palette, theme: theme, onToggleTheme: toggleTheme)
         }
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -45,23 +49,45 @@ struct RootView: View {
     .frame(minWidth: 1100, minHeight: 760)
     .background(palette.background)
     .preferredColorScheme(theme.colorScheme)
+    .onAppear {
+      installGlobalKeyMonitor()
+    }
+    .onDisappear {
+      removeGlobalKeyMonitor()
+    }
   }
 
   private func toggleTheme() {
     themeRawValue = (theme == .dark ? AppTheme.light.rawValue : AppTheme.dark.rawValue)
   }
+
+  private func installGlobalKeyMonitor() {
+    guard globalKeyMonitor == nil else { return }
+    globalKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+      if let key = event.charactersIgnoringModifiers?.lowercased(), key == "f" {
+        NSApplication.shared.keyWindow?.toggleFullScreen(nil)
+        return nil
+      }
+      return event
+    }
+  }
+
+  private func removeGlobalKeyMonitor() {
+    if let monitor = globalKeyMonitor {
+      NSEvent.removeMonitor(monitor)
+      globalKeyMonitor = nil
+    }
+  }
 }
 
 struct TopBar: View {
   @Binding var screen: Screen
-  let theme: AppTheme
   let palette: Palette
-  let onToggleTheme: () -> Void
 
   var body: some View {
     HStack(spacing: 12) {
       VStack(alignment: .leading, spacing: 4) {
-        Text("Timed Drawing Session")
+        Text("Drawing Session")
           .font(.system(size: 18, weight: .bold))
       }
 
@@ -74,38 +100,58 @@ struct TopBar: View {
       TopTabButton(title: "History", isSelected: screen == .history, background: palette.background) {
         screen = .history
       }
-
-      BWButton(
-        title: theme.label,
-        fillColor: palette.background,
-        borderColor: Color.clear,
-        systemImage: theme == .dark ? "sun.max" : "moon",
-        action: onToggleTheme
-      )
+      TopTabButton(title: "", systemImage: "gearshape", width: 28, isSelected: screen == .settings, background: palette.background) {
+        screen = .settings
+      }
     }
   }
 }
 
 struct TopTabButton: View {
   let title: String
+  let systemImage: String?
+  let width: CGFloat
   let isSelected: Bool
   let background: Color
   let action: () -> Void
   @State private var isHovering = false
 
+  init(
+    title: String,
+    systemImage: String? = nil,
+    width: CGFloat = 100,
+    isSelected: Bool,
+    background: Color,
+    action: @escaping () -> Void
+  ) {
+    self.title = title
+    self.systemImage = systemImage
+    self.width = width
+    self.isSelected = isSelected
+    self.background = background
+    self.action = action
+  }
+
   var body: some View {
     Button(action: action) {
       VStack(spacing: 4) {
-        Text(title)
-          .font(.system(size: 13, weight: .semibold))
-          .foregroundStyle((isSelected || isHovering) ? Color.primary : Color.secondary)
+        Group {
+          if let systemImage {
+            Image(systemName: systemImage)
+              .font(.system(size: 13, weight: .semibold))
+          } else {
+            Text(title)
+              .font(.system(size: 13, weight: .semibold))
+          }
+        }
+        .foregroundStyle((isSelected || isHovering) ? Color.primary : Color.secondary)
 
         Rectangle()
           .frame(height: 1)
           .foregroundStyle(Color.primary)
           .opacity(isSelected ? 1 : 0)
       }
-      .frame(width: 100)
+      .frame(width: width)
       .padding(.horizontal, 2)
       .padding(.vertical, 2)
       .background(background)
