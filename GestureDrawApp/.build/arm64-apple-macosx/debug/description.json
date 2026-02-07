@@ -43,6 +43,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/ScrollViewStyles.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/SessionView.swift"
         },
         {
@@ -67,6 +71,7 @@
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/HistoryView.swift.o",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/Models.swift.o",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/RootView.swift.o",
+        "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/ScrollViewStyles.swift.o",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/SessionView.swift.o",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/SetupView.swift.o",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/SummaryView.swift.o",
@@ -138,6 +143,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/ScrollViewStyles.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/SessionView.swift.o"
         },
         {
@@ -163,6 +172,7 @@
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/HistoryView.swift",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/Models.swift",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/RootView.swift",
+        "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/ScrollViewStyles.swift",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/SessionView.swift",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/SetupView.swift",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/SummaryView.swift",
@@ -189,6 +199,7 @@
       "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/HistoryView.swift",
       "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/Models.swift",
       "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/RootView.swift",
+      "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/ScrollViewStyles.swift",
       "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/SessionView.swift",
       "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/SetupView.swift",
       "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/SummaryView.swift",

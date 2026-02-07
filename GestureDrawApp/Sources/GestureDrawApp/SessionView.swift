@@ -29,26 +29,6 @@ struct SessionView: View {
           .ignoresSafeArea()
       }
 
-      VStack {
-        Spacer()
-        HStack {
-          VStack(alignment: .leading, spacing: 4) {
-            Text(timerLabel)
-              .font(.system(size: 22, weight: .bold))
-            Text(model.activeImage?.name ?? "")
-              .font(.system(size: 12))
-              .foregroundStyle(palette.muted)
-            Text(progressLabel)
-              .font(.system(size: 11))
-              .foregroundStyle(palette.muted)
-          }
-
-          Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 12)
-      }
-
       HStack {
         Spacer()
         HStack(spacing: 10) {
@@ -76,10 +56,32 @@ struct SessionView: View {
       .padding(.horizontal, 16)
       .padding(.vertical, 12)
       .background(palette.background.opacity(0.9))
-      .overlay(Rectangle().stroke(palette.border, lineWidth: 1))
       .opacity(controlsVisible ? 1 : 0)
       .allowsHitTesting(controlsVisible)
       .animation(.easeInOut(duration: 0.3), value: controlsVisible)
+      .zIndex(1)
+
+      VStack {
+        Spacer()
+        HStack {
+          VStack(alignment: .leading, spacing: 4) {
+            Text(timerLabel)
+              .font(.system(size: 22, weight: .bold))
+            Text(model.activeImage?.name ?? "")
+              .font(.system(size: 12))
+              .foregroundStyle(palette.muted)
+            Text(progressLabel)
+              .font(.system(size: 11))
+              .foregroundStyle(palette.muted)
+          }
+
+          Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 12)
+      }
+      .allowsHitTesting(false)
+      .zIndex(2)
     }
     .onReceive(timer) { _ in
       model.tick()

@@ -32,6 +32,12 @@
     "swiftmodule": "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/RootView~partial.swiftmodule",
     "swift-dependencies": "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/RootView.swiftdeps"
   },
+  "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/ScrollViewStyles.swift": {
+    "dependencies": "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/ScrollViewStyles.d",
+    "object": "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/ScrollViewStyles.swift.o",
+    "swiftmodule": "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/ScrollViewStyles~partial.swiftmodule",
+    "swift-dependencies": "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/ScrollViewStyles.swiftdeps"
+  },
   "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/SessionView.swift": {
     "dependencies": "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/SessionView.d",
     "object": "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/SessionView.swift.o",

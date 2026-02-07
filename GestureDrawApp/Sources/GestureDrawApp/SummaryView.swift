@@ -43,6 +43,7 @@ struct SummaryView: View {
         }
         .padding(.top, 8)
       }
+      .thinScrollIndicators()
       .frame(maxHeight: 320)
       .overlay(Rectangle().stroke(palette.border, lineWidth: 1))
 

@@ -7,6 +7,7 @@ struct HistoryView: View {
   @State private var pendingAction: HistoryAction? = nil
 
   private let grid = [GridItem(.adaptive(minimum: 60), spacing: 10)]
+  private let calendar = Calendar.current
   private let dateFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.dateStyle = .medium
@@ -20,73 +21,114 @@ struct HistoryView: View {
     return formatter
   }()
 
-  private var entries: [HistoryEntry] {
-    model.history.sorted { $0.start > $1.start }.map { log in
-      HistoryEntry(
-        date: dateFormatter.string(from: log.start),
-        timeRange: "\(timeFormatter.string(from: log.start)) - \(timeFormatter.string(from: log.end))",
-        timer: timerLabel(for: log),
-        count: countLabel(for: log),
-        imagePaths: imagePaths(for: log)
+  private var sections: [HistorySection] {
+    let logs = model.history.sorted { $0.start > $1.start }
+    let grouped = Dictionary(grouping: logs) { calendar.startOfDay(for: $0.start) }
+    let dates = grouped.keys.sorted(by: >)
+
+    return dates.map { date in
+      let logsForDate = (grouped[date] ?? []).sorted { $0.start > $1.start }
+      let totalSeconds = logsForDate.reduce(0.0) { $0 + max(0, $1.end.timeIntervalSince($1.start)) }
+      let entries = logsForDate.map { log in
+        HistoryEntry(
+          time: timeFormatter.string(from: log.start),
+          sessionLength: sessionLengthLabel(for: log),
+          timer: timerLabel(for: log),
+          count: countLabel(for: log),
+          imagePaths: imagePaths(for: log)
+        )
+      }
+      return HistorySection(
+        date: date,
+        label: dateFormatter.string(from: date),
+        totalLabel: sessionLengthLabel(forSeconds: totalSeconds),
+        entries: entries
       )
     }
   }
 
   var body: some View {
     ZStack {
-      HStack(alignment: .top, spacing: 20) {
-        VStack(alignment: .leading, spacing: 16) {
-          Text("Log")
-            .font(.system(size: 20, weight: .bold))
+      ScrollViewReader { proxy in
+        HStack(alignment: .top, spacing: 20) {
+          VStack(alignment: .leading, spacing: 16) {
+            Text("Log")
+              .font(.system(size: 20, weight: .bold))
 
-          ScrollView {
-            if entries.isEmpty {
-              VStack(alignment: .leading, spacing: 8) {
-                Text("No sessions yet.")
-                  .font(.system(size: 14, weight: .semibold))
+            ScrollView {
+              if sections.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                  Text("No sessions yet.")
+                    .font(.system(size: 14, weight: .semibold))
                 Text("Complete a session to see it listed here.")
                   .font(.system(size: 12))
                   .foregroundStyle(palette.muted)
                 Spacer(minLength: 0)
-              }
-              .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-              .padding(.top, 8)
-            } else {
-              VStack(spacing: 16) {
-              ForEach(entries) { entry in
-                HistoryCard(
-                  entry: entry,
-                  palette: palette,
-                  grid: grid,
-                  onStartSession: { imagePath in
-                    model.startSession(with: imagePath)
-                  }
-                )
-              }
-            }
-              .padding(.top, 8)
-            }
-          }
-          .frame(maxHeight: .infinity)
-        }
-        .padding(20)
-        .background(palette.panel)
-        .overlay(Rectangle().stroke(palette.border, lineWidth: 1))
-        .frame(maxWidth: .infinity)
-        .frame(maxHeight: .infinity, alignment: .top)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(.top, 8)
+              } else {
+                VStack(spacing: 20) {
+                  ForEach(sections) { section in
+                    VStack(alignment: .leading, spacing: 12) {
+                      HStack(spacing: 10) {
+                        Text(section.label)
+                          .font(.system(size: 14, weight: .bold))
+                          .foregroundStyle(palette.text)
+                        Spacer()
+                        Text("Total session time: \(section.totalLabel)")
+                          .font(.system(size: 12, weight: .semibold))
+                          .foregroundStyle(palette.muted)
+                      }
 
-        HistorySidePanel(
-          palette: palette,
-          logs: model.history,
-          onAction: { action in
-            pendingAction = action
+                      VStack(spacing: 16) {
+                        ForEach(section.entries) { entry in
+                          HistoryCard(
+                            entry: entry,
+                            palette: palette,
+                            grid: grid,
+                            onStartSession: { imagePath in
+                              model.startSession(with: imagePath)
+                            }
+                          )
+                        }
+                      }
+                    }
+                    .id(section.id)
+                  }
+                }
+                .padding(.top, 8)
+              }
+            }
+            .thinScrollIndicators()
+            .frame(maxHeight: .infinity)
           }
-        )
           .padding(20)
           .background(palette.panel)
           .overlay(Rectangle().stroke(palette.border, lineWidth: 1))
-          .frame(width: 360)
+          .frame(maxWidth: .infinity)
           .frame(maxHeight: .infinity, alignment: .top)
+
+          HistorySidePanel(
+            palette: palette,
+            logs: model.history,
+            onDateSelected: { date in
+              if let match = sections.first(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                  proxy.scrollTo(match.id, anchor: .top)
+                }
+              }
+            },
+            onAction: { action in
+              pendingAction = action
+            }
+          )
+            .padding(20)
+            .background(palette.panel)
+            .overlay(Rectangle().stroke(palette.border, lineWidth: 1))
+            .frame(width: 360)
+            .frame(maxHeight: .infinity, alignment: .top)
+        }
       }
       .padding(20)
       .background(palette.background)
@@ -115,10 +157,10 @@ struct HistoryView: View {
 
   private func countLabel(for log: SessionLog) -> String {
     if let target = log.targetCount {
-      return "\(target) \(target == 1 ? "image" : "images")"
+      return "\(target)"
     }
     let count = log.imageIds.count
-    return "\(count) \(count == 1 ? "image" : "images")"
+    return "\(count)"
   }
 
   private func imagePaths(for log: SessionLog) -> [String] {
@@ -132,13 +174,30 @@ struct HistoryView: View {
     return paths
   }
 
+  private func sessionLengthLabel(for log: SessionLog) -> String {
+    sessionLengthLabel(forSeconds: max(0, log.end.timeIntervalSince(log.start)))
+  }
+
+  private func sessionLengthLabel(forSeconds seconds: Double) -> String {
+    let totalMinutes = Int(seconds / 60)
+    if totalMinutes < 1 {
+      return "<1 min"
+    }
+    let hours = totalMinutes / 60
+    let minutes = totalMinutes % 60
+    if hours > 0 {
+      return minutes > 0 ? "\(hours)h \(minutes)m" : "\(hours)h"
+    }
+    return "\(minutes) min"
+  }
+
   private func handleAction(_ action: HistoryAction) {
     switch action {
     case .clearHistory:
       model.clearHistory()
     case .resetDrawCount:
       model.clearDrawHistory()
-    case .resetEverything:
+    case .resetAll:
       model.resetEverything()
     }
   }
@@ -146,11 +205,19 @@ struct HistoryView: View {
 
 struct HistoryEntry: Identifiable {
   let id = UUID()
-  let date: String
-  let timeRange: String
+  let time: String
+  let sessionLength: String
   let timer: String
   let count: String
   let imagePaths: [String]
+}
+
+struct HistorySection: Identifiable {
+  let id = UUID()
+  let date: Date
+  let label: String
+  let totalLabel: String
+  let entries: [HistoryEntry]
 }
 
 struct HistoryCard: View {
@@ -163,8 +230,9 @@ struct HistoryCard: View {
     VStack(alignment: .leading, spacing: 12) {
       HStack(alignment: .top, spacing: 16) {
         VStack(alignment: .leading, spacing: 6) {
-          HistoryLine(title: "Date:", value: entry.date)
-          HistoryLine(title: "Time:", value: entry.timeRange)
+          HistoryLine(title: entry.time, value: "")
+            .padding(.bottom, 4)
+          HistoryLine(title: "Session:", value: entry.sessionLength)
           HistoryLine(title: "Timer:", value: entry.timer)
           HistoryLine(title: "Images:", value: entry.count)
         }
@@ -180,13 +248,6 @@ struct HistoryCard: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .frame(height: 90)
-            .onHover { hovering in
-              if hovering {
-                NSCursor.pointingHand.push()
-              } else {
-                NSCursor.pop()
-              }
-            }
             .onTapGesture(count: 2) {
               onStartSession(path)
             }
@@ -217,6 +278,7 @@ private struct HistoryLine: View {
 struct HistorySidePanel: View {
   let palette: Palette
   let logs: [SessionLog]
+  let onDateSelected: (Date) -> Void
   let onAction: (HistoryAction) -> Void
 
   var body: some View {
@@ -224,7 +286,7 @@ struct HistorySidePanel: View {
       Text("Summary")
         .font(.system(size: 20, weight: .bold))
 
-      UsageCalendar(palette: palette, logs: logs)
+      UsageCalendar(palette: palette, logs: logs, onDateSelected: onDateSelected)
 
       Divider()
 
@@ -254,22 +316,16 @@ struct HistorySidePanel: View {
           ) {
             onAction(.resetDrawCount)
           }
-        }
-      }
-
-      VStack(alignment: .leading, spacing: 10) {
-        Text("Debug Items")
-          .font(.system(size: 12, weight: .semibold))
-          .foregroundStyle(palette.muted)
-        BWButton(
-          title: "Reset Everything",
-          minHeight: 24,
-          fillColor: palette.panelAlt,
-          textColor: palette.muted,
-          borderColor: palette.border,
-          fontSize: 10
-        ) {
-          onAction(.resetEverything)
+          BWButton(
+            title: "Reset All",
+            minHeight: 24,
+            fillColor: palette.panelAlt,
+            textColor: palette.muted,
+            borderColor: palette.border,
+            fontSize: 10
+          ) {
+            onAction(.resetAll)
+          }
         }
       }
     }
@@ -279,7 +335,7 @@ struct HistorySidePanel: View {
 enum HistoryAction: String, Identifiable {
   case clearHistory
   case resetDrawCount
-  case resetEverything
+  case resetAll
 
   var id: String { rawValue }
 
@@ -289,8 +345,8 @@ enum HistoryAction: String, Identifiable {
       return "Clear History?"
     case .resetDrawCount:
       return "Reset Draw Count?"
-    case .resetEverything:
-      return "Reset Everything?"
+    case .resetAll:
+      return "Reset All?"
     }
   }
 
@@ -300,7 +356,7 @@ enum HistoryAction: String, Identifiable {
       return "This will clear all the sessions logged."
     case .resetDrawCount:
       return "This will reset the draw count logged for every image. This information is used to weight the randomization of images towards the lesser-drawn images."
-    case .resetEverything:
+    case .resetAll:
       return "This will clear history, reset draw counts, and remove the selected folder."
     }
   }
@@ -311,8 +367,8 @@ enum HistoryAction: String, Identifiable {
       return "Clear History"
     case .resetDrawCount:
       return "Reset Draw Count"
-    case .resetEverything:
-      return "Reset Everything"
+    case .resetAll:
+      return "Reset All"
     }
   }
 }
@@ -360,6 +416,7 @@ struct ConfirmationModal: View {
 struct UsageCalendar: View {
   let palette: Palette
   let logs: [SessionLog]
+  let onDateSelected: (Date) -> Void
 
   @State private var displayedMonth: Date = Date()
   @Environment(\.colorScheme) private var scheme
@@ -423,6 +480,7 @@ struct UsageCalendar: View {
 
         ForEach(calendarDays) { day in
           let isToday = isToday(day)
+          let isEmpty = day.day.isEmpty
           VStack(spacing: 4) {
             Text(day.day)
               .font(.system(size: 11, weight: .semibold))
@@ -436,6 +494,12 @@ struct UsageCalendar: View {
           .frame(maxWidth: .infinity)
           .background(palette.panelAlt)
           .overlay(Rectangle().stroke(isToday ? (scheme == .light ? Color.black : Color.white) : palette.border, lineWidth: 1))
+          .contentShape(Rectangle())
+          .onTapGesture {
+            if let date = dateForDay(day) {
+              onDateSelected(date)
+            }
+          }
         }
       }
     }
@@ -467,6 +531,12 @@ struct UsageCalendar: View {
       let logComps = calendar.dateComponents([.year, .month], from: log.start)
       return logComps.year == comps.year && logComps.month == comps.month
     }
+  }
+
+  private func dateForDay(_ day: CalendarDay) -> Date? {
+    guard let dayNumber = Int(day.day) else { return nil }
+    let monthStart = startOfMonth(for: displayedMonth)
+    return calendar.date(byAdding: .day, value: dayNumber - 1, to: monthStart)
   }
 
   private func isToday(_ day: CalendarDay) -> Bool {

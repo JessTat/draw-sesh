@@ -1,5 +1,4 @@
 import SwiftUI
-import AppKit
 
 enum Screen: String, CaseIterable {
   case setup = "Setup"
@@ -78,7 +77,7 @@ struct TopBar: View {
       BWButton(
         title: theme.label,
         fillColor: palette.background,
-        borderColor: palette.border,
+        borderColor: Color.clear,
         systemImage: theme == .dark ? "sun.max" : "moon",
         action: onToggleTheme
       )
@@ -91,13 +90,14 @@ struct TopTabButton: View {
   let isSelected: Bool
   let background: Color
   let action: () -> Void
+  @State private var isHovering = false
 
   var body: some View {
     Button(action: action) {
       VStack(spacing: 4) {
         Text(title)
           .font(.system(size: 13, weight: .semibold))
-          .foregroundStyle(isSelected ? Color.primary : Color.secondary)
+          .foregroundStyle((isSelected || isHovering) ? Color.primary : Color.secondary)
 
         Rectangle()
           .frame(height: 1)
@@ -111,11 +111,7 @@ struct TopTabButton: View {
     }
     .buttonStyle(.plain)
     .onHover { hovering in
-      if hovering {
-        NSCursor.pointingHand.push()
-      } else {
-        NSCursor.pop()
-      }
+      isHovering = hovering
     }
   }
 }
@@ -166,6 +162,7 @@ struct BWButton: View {
   }
 
   @Environment(\.colorScheme) private var scheme
+  @State private var isHovering = false
 
   var body: some View {
     let baseFill = fillColor ?? (scheme == .dark ? Color.black : Color(white: 0.2))
@@ -182,6 +179,7 @@ struct BWButton: View {
       return isSelected ? Color.white : Color.black
     }()
     let stroke = borderColor ?? background
+    let hoverOverlay = scheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06)
 
     let resolvedFontSize = fontSize ?? 13
     let resolvedWeight = fontWeight ?? .medium
@@ -201,16 +199,13 @@ struct BWButton: View {
       .padding(.vertical, 6)
       .padding(.horizontal, 12)
       .background(background)
+      .overlay(Rectangle().fill(hoverOverlay).opacity(isHovering ? 1 : 0))
       .foregroundStyle(foreground)
       .overlay(Rectangle().stroke(stroke, lineWidth: 1))
     }
     .buttonStyle(.plain)
     .onHover { hovering in
-      if hovering {
-        NSCursor.pointingHand.push()
-      } else {
-        NSCursor.pop()
-      }
+      isHovering = hovering
     }
   }
 }

@@ -94,6 +94,7 @@ struct SetupView: View {
             }
             .padding(.top, 8)
           }
+          .thinScrollIndicators()
           .frame(maxHeight: .infinity)
           .padding(.trailing, -8)
         }
@@ -132,8 +133,7 @@ struct SetupView: View {
             Text("Custom")
               .font(.system(size: 12))
               .foregroundStyle(palette.muted)
-            TextField("min", text: $customMinutesText)
-              .textFieldStyle(.plain)
+            NoSelectTextField(text: $customMinutesText, placeholder: "min")
               .padding(8)
               .frame(width: 36)
               .background(palette.panelAlt)
@@ -141,7 +141,7 @@ struct SetupView: View {
             Text("min")
               .font(.system(size: 12))
               .foregroundStyle(palette.muted)
-            BWButton(title: "∞", minHeight: 32, isSelected: model.minutes == 0) {
+            BWButton(title: "No Timer", minHeight: 32, isSelected: model.minutes == 0) {
               model.minutes = 0
               customMinutesText = "0"
             }
@@ -225,13 +225,6 @@ struct ImageCard: View {
           .frame(maxWidth: .infinity, maxHeight: .infinity)
       }
       .frame(height: height)
-      .onHover { hovering in
-        if hovering {
-          NSCursor.pointingHand.push()
-        } else {
-          NSCursor.pop()
-        }
-      }
       .gesture(
         ExclusiveGesture(
           TapGesture(count: 2).onEnded { onStartSession() },
@@ -271,6 +264,55 @@ struct ImageCard: View {
     .padding(8)
     .background(palette.panelAlt)
     .opacity(image.included ? 1 : 0.45)
+  }
+}
+
+struct NoSelectTextField: NSViewRepresentable {
+  @Binding var text: String
+  let placeholder: String
+
+  func makeCoordinator() -> Coordinator {
+    Coordinator(text: $text)
+  }
+
+  func makeNSView(context: Context) -> NSTextField {
+    let field = NSTextField(string: text)
+    field.isBordered = false
+    field.isBezeled = false
+    field.drawsBackground = false
+    field.focusRingType = .none
+    field.usesSingleLineMode = true
+    field.cell?.wraps = false
+    field.cell?.isScrollable = true
+    field.placeholderString = placeholder
+    field.delegate = context.coordinator
+    return field
+  }
+
+  func updateNSView(_ nsView: NSTextField, context: Context) {
+    if nsView.stringValue != text {
+      nsView.stringValue = text
+    }
+  }
+
+  class Coordinator: NSObject, NSTextFieldDelegate {
+    @Binding var text: String
+
+    init(text: Binding<String>) {
+      _text = text
+    }
+
+    func controlTextDidChange(_ obj: Notification) {
+      guard let field = obj.object as? NSTextField else { return }
+      text = field.stringValue
+    }
+
+    func controlTextDidBeginEditing(_ obj: Notification) {
+      guard let field = obj.object as? NSTextField else { return }
+      if let editor = field.currentEditor() {
+        editor.selectedRange = NSRange(location: editor.string.count, length: 0)
+      }
+    }
   }
 }
 
