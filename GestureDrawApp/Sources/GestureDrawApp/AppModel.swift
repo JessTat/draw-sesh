@@ -4,7 +4,7 @@ import AppKit
 final class AppModel: ObservableObject {
   @Published var screen: Screen = .setup
   @Published var images: [ImageItem] = []
-  @Published var folderPath: String = "/Users/jess/Projects/26-01 Figure Drawing/Gestures"
+  @Published var folderPath: String = ""
   @Published var minutes: Int = 1
   @Published var count: Int = 10
   @Published var infinite: Bool = false
@@ -15,12 +15,14 @@ final class AppModel: ObservableObject {
 
   private let defaultsKey = "gd-folder-path"
   private let allowedExtensions: Set<String> = ["jpg", "jpeg", "png", "webp"]
+  private var saveHistoryWorkItem: DispatchWorkItem?
+  private let historySaveDelay: TimeInterval = 0.5
 
   init() {
     if let savedPath = UserDefaults.standard.string(forKey: defaultsKey) {
       folderPath = savedPath
     }
-    loadImages(from: folderPath)
+    loadImages(from: folderPath, forceRescan: false)
     loadHistory()
   }
 
@@ -56,7 +58,7 @@ final class AppModel: ObservableObject {
   func setFolder(_ path: String) {
     folderPath = path
     UserDefaults.standard.set(path, forKey: defaultsKey)
-    loadImages(from: path)
+    loadImages(from: path, forceRescan: true)
   }
 
   func toggleInclude(for imageId: String, included: Bool) {
@@ -267,9 +269,21 @@ final class AppModel: ObservableObject {
     return pool.last ?? pool[0]
   }
 
-  private func loadImages(from folder: String) {
-    let urls = scanImages(in: folder)
+  private func loadImages(from folder: String, forceRescan: Bool) {
+    let trimmed = folder.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else {
+      images = []
+      return
+    }
     let metadata = loadMetadata()
+    let urls: [URL]
+
+    if !forceRescan, let cached = loadIndexEntry(for: folder) {
+      urls = cached.paths.map { URL(fileURLWithPath: $0) }
+    } else {
+      urls = scanImages(in: folder)
+      saveIndexEntry(folder: folder, paths: urls.map(\.path))
+    }
 
     images = urls.map { url in
       let path = url.path
@@ -314,6 +328,15 @@ final class AppModel: ObservableObject {
     return dir.appendingPathComponent("metadata.json")
   }
 
+  private func indexURL() -> URL {
+    let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    let dir = base.appendingPathComponent("GestureDrawApp", isDirectory: true)
+    if !FileManager.default.fileExists(atPath: dir.path) {
+      try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    }
+    return dir.appendingPathComponent("index.json")
+  }
+
   private func historyURL() -> URL {
     let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
     let dir = base.appendingPathComponent("GestureDrawApp", isDirectory: true)
@@ -339,10 +362,17 @@ final class AppModel: ObservableObject {
   }
 
   private func saveHistory() {
-    let encoder = JSONEncoder()
-    encoder.dateEncodingStrategy = .iso8601
-    guard let data = try? encoder.encode(history) else { return }
-    try? data.write(to: historyURL(), options: .atomic)
+    saveHistoryWorkItem?.cancel()
+    let snapshot = history
+    let url = historyURL()
+    let work = DispatchWorkItem {
+      let encoder = JSONEncoder()
+      encoder.dateEncodingStrategy = .iso8601
+      guard let data = try? encoder.encode(snapshot) else { return }
+      try? data.write(to: url, options: .atomic)
+    }
+    saveHistoryWorkItem = work
+    DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + historySaveDelay, execute: work)
   }
 
   func clearHistory() {
@@ -455,4 +485,31 @@ final class AppModel: ObservableObject {
     guard let data = try? JSONEncoder().encode(records) else { return }
     try? data.write(to: metadataURL(), options: .atomic)
   }
+
+  private func loadIndex() -> [String: ImageIndexEntry] {
+    let url = indexURL()
+    guard let data = try? Data(contentsOf: url) else { return [:] }
+    guard let entries = try? JSONDecoder().decode([String: ImageIndexEntry].self, from: data) else { return [:] }
+    return entries
+  }
+
+  private func saveIndex(_ entries: [String: ImageIndexEntry]) {
+    guard let data = try? JSONEncoder().encode(entries) else { return }
+    try? data.write(to: indexURL(), options: .atomic)
+  }
+
+  private func loadIndexEntry(for folder: String) -> ImageIndexEntry? {
+    loadIndex()[folder]
+  }
+
+  private func saveIndexEntry(folder: String, paths: [String]) {
+    var entries = loadIndex()
+    entries[folder] = ImageIndexEntry(scannedAt: Date(), paths: paths)
+    saveIndex(entries)
+  }
+}
+
+private struct ImageIndexEntry: Codable {
+  let scannedAt: Date
+  let paths: [String]
 }

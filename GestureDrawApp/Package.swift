@@ -12,7 +12,10 @@ let package = Package(
   targets: [
     .executableTarget(
       name: "GestureDrawApp",
-      path: "Sources/GestureDrawApp"
+      path: "Sources/GestureDrawApp",
+      resources: [
+        .process("Resources")
+      ]
     )
   ]
 )

@@ -8,6 +8,7 @@ struct SetupView: View {
   @State private var thumbnailSize: CGFloat = 160
   @State private var customMinutesText: String = "1"
   @State private var missingInfo: MissingImageInfo? = nil
+  @State private var visibleItems: Set<String> = []
 
   private let presetMinutes = [1, 2, 3, 5, 10, 15]
 
@@ -70,9 +71,9 @@ struct SetupView: View {
 
         if model.images.isEmpty {
           VStack(alignment: .leading, spacing: 8) {
-            Text("No images found in this folder.")
+            Text("No images found.")
               .font(.system(size: 14, weight: .semibold))
-            Text("Choose a folder containing the images you wish to randomly cycle through in this drawing session. This app only supports JPG, PNG, and WEBP files.")
+            Text("Load a folder with images for your drawing session. File types supported: .JPG, .PNG, .WEBP.")
               .font(.system(size: 12))
               .foregroundStyle(palette.muted)
           }
@@ -85,6 +86,7 @@ struct SetupView: View {
                   image: image,
                   palette: palette,
                   height: thumbnailHeight,
+                  isVisible: visibleItems.contains(image.id),
                   onIncludeToggle: { isIncluded in
                     model.toggleInclude(for: image.id, included: isIncluded)
                   },
@@ -98,6 +100,12 @@ struct SetupView: View {
                     model.clearDrawCount(for: image.id)
                   }
                 )
+                .onAppear {
+                  visibleItems.insert(image.id)
+                }
+                .onDisappear {
+                  visibleItems.remove(image.id)
+                }
               }
             }
             .padding(.top, 8)
@@ -216,6 +224,7 @@ struct ImageCard: View {
   let image: ImageItem
   let palette: Palette
   let height: CGFloat
+  let isVisible: Bool
   let onIncludeToggle: (Bool) -> Void
   let onStartSession: () -> Void
   let onMissingImage: (String) -> Void
@@ -231,8 +240,10 @@ struct ImageCard: View {
       ZStack {
         Rectangle()
           .fill(palette.previewBackground)
-        ThumbnailView(path: image.path)
-          .frame(maxWidth: .infinity, maxHeight: .infinity)
+        if isVisible {
+          ScaledThumbnailView(path: image.path, maxSize: height)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
       }
       .frame(height: height)
       .overlay(Rectangle().stroke(isHovering ? palette.text.opacity(0.6) : Color.clear, lineWidth: 1))
@@ -345,54 +356,6 @@ struct NoSelectTextField: NSViewRepresentable {
       guard let field = obj.object as? NSTextField else { return }
       if let editor = field.currentEditor() {
         editor.selectedRange = NSRange(location: editor.string.count, length: 0)
-      }
-    }
-  }
-}
-
-struct ThumbnailView: View {
-  let path: String
-  @State private var image: NSImage? = nil
-  @State private var isMissing: Bool = false
-
-  var body: some View {
-    Group {
-      if let image {
-        Image(nsImage: image)
-          .resizable()
-          .scaledToFit()
-      } else if isMissing {
-        Image(systemName: "questionmark.square.dashed")
-          .font(.system(size: 22, weight: .semibold))
-          .foregroundStyle(Color.secondary)
-      } else {
-        Color.clear
-      }
-    }
-    .onAppear {
-      loadImage()
-    }
-    .onChange(of: path) { _ in
-      loadImage()
-    }
-  }
-
-  private func loadImage() {
-    if let cached = ImageCache.shared.image(for: path) {
-      image = cached
-      isMissing = false
-      return
-    }
-
-    isMissing = false
-    DispatchQueue.global(qos: .userInitiated).async {
-      let loaded = NSImage(contentsOfFile: path)
-      if let loaded {
-        ImageCache.shared.set(loaded, for: path)
-      }
-      DispatchQueue.main.async {
-        image = loaded
-        isMissing = loaded == nil
       }
     }
   }

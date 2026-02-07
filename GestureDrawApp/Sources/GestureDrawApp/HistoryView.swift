@@ -481,6 +481,7 @@ struct HistoryThumbnail: View {
   let onClearDrawCount: (String) -> Void
 
   @State private var isHovering = false
+  @State private var isVisible = false
 
   private var isMissing: Bool {
     !FileManager.default.fileExists(atPath: path)
@@ -490,13 +491,21 @@ struct HistoryThumbnail: View {
     ZStack {
       Rectangle()
         .fill(palette.previewBackground)
-      ScaledThumbnailView(path: path, maxSize: 180)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+      if isVisible {
+        ScaledThumbnailView(path: path, maxSize: 180)
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+      }
     }
     .frame(height: 90)
     .overlay(Rectangle().stroke(isHovering ? palette.text.opacity(0.6) : Color.clear, lineWidth: 1))
     .onHover { hovering in
       isHovering = hovering
+    }
+    .onAppear {
+      isVisible = true
+    }
+    .onDisappear {
+      isVisible = false
     }
     .onTapGesture(count: 2) {
       if isMissing {
@@ -522,69 +531,6 @@ struct HistoryThumbnail: View {
   }
 }
 
-struct ScaledThumbnailView: View {
-  let path: String
-  let maxSize: CGFloat
-  @State private var image: NSImage? = nil
-  @State private var isMissing: Bool = false
-
-  var body: some View {
-    Group {
-      if let image {
-        Image(nsImage: image)
-          .resizable()
-          .scaledToFit()
-      } else if isMissing {
-        Image(systemName: "questionmark.square.dashed")
-          .font(.system(size: 22, weight: .semibold))
-          .foregroundStyle(Color.secondary)
-      } else {
-        Color.clear
-      }
-    }
-    .onAppear {
-      loadImage()
-    }
-    .onChange(of: path) { _ in
-      loadImage()
-    }
-  }
-
-  private func loadImage() {
-    if let cached = ThumbnailCache.shared.image(for: path, size: maxSize) {
-      image = cached
-      isMissing = false
-      return
-    }
-
-    isMissing = false
-    DispatchQueue.global(qos: .userInitiated).async {
-      let loaded = NSImage(contentsOfFile: path)
-      let scaled = loaded.map { downscale($0, maxSize: maxSize) }
-      if let scaled {
-        ThumbnailCache.shared.set(scaled, for: path, size: maxSize)
-      }
-      DispatchQueue.main.async {
-        image = scaled
-        isMissing = scaled == nil
-      }
-    }
-  }
-
-  private func downscale(_ image: NSImage, maxSize: CGFloat) -> NSImage {
-    let original = image.size
-    let ratio = min(maxSize / original.width, maxSize / original.height, 1)
-    let newSize = NSSize(width: original.width * ratio, height: original.height * ratio)
-    let newImage = NSImage(size: newSize)
-    newImage.lockFocus()
-    image.draw(in: NSRect(origin: .zero, size: newSize),
-               from: NSRect(origin: .zero, size: original),
-               operation: .copy,
-               fraction: 1)
-    newImage.unlockFocus()
-    return newImage
-  }
-}
 
 private struct HistoryLine: View {
   let title: String

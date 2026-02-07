@@ -56,7 +56,7 @@ struct SettingsView: View {
             .font(.system(size: 12))
             .foregroundStyle(palette.muted)
 
-            Text("Begin the short intervals by focusing on gesture. As the timer gets longer, introduce rhythms and structure, increasing detail and being intentional with proportions with more time. Take an eye and hand break between every session.")
+            Text("Begin with focusing on short gestures. As the time increases, focus on creating pleasant shapes with intentional rhythms. Eventually, introduce anatomical structure. Keep intentional with your lines with simple and interesting shape language. Take an eye and hand break between every session.")
               .font(.system(size: 12))
               .foregroundStyle(palette.muted)
 
