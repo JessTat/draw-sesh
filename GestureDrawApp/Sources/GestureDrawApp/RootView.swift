@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 enum Screen: String, CaseIterable {
   case setup = "Setup"
@@ -199,9 +200,9 @@ struct BWButton: View {
       .padding(.vertical, 6)
       .padding(.horizontal, 12)
       .background(background)
-      .overlay(Rectangle().fill(hoverOverlay).opacity(isHovering ? 1 : 0))
+      .overlay(Rectangle().fill(hoverOverlay).opacity(isHovering ? 1 : 0).allowsHitTesting(false))
       .foregroundStyle(foreground)
-      .overlay(Rectangle().stroke(stroke, lineWidth: 1))
+      .overlay(Rectangle().stroke(stroke, lineWidth: 1).allowsHitTesting(false))
     }
     .buttonStyle(.plain)
     .onHover { hovering in

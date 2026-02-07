@@ -225,6 +225,13 @@ struct ImageCard: View {
           .frame(maxWidth: .infinity, maxHeight: .infinity)
       }
       .frame(height: height)
+      .onHover { hovering in
+        if hovering {
+          NSCursor.pointingHand.set()
+        } else {
+          NSCursor.arrow.set()
+        }
+      }
       .gesture(
         ExclusiveGesture(
           TapGesture(count: 2).onEnded { onStartSession() },

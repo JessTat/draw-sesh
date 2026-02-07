@@ -248,6 +248,13 @@ struct HistoryCard: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .frame(height: 90)
+            .onHover { hovering in
+              if hovering {
+                NSCursor.pointingHand.set()
+              } else {
+                NSCursor.arrow.set()
+              }
+            }
             .onTapGesture(count: 2) {
               onStartSession(path)
             }
