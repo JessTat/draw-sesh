@@ -9,6 +9,9 @@ struct HistoryView: View {
   @State private var pendingDeleteInfo: String = ""
   @State private var sectionOffsets: [Date: CGFloat] = [:]
   @State private var logScrollView: NSScrollView? = nil
+  @State private var missingInfo: MissingImageInfo? = nil
+  @State private var sections: [HistorySection] = []
+  @State private var selectedMonth: Date = Date()
 
   private let grid = [GridItem(.adaptive(minimum: 60), spacing: 10)]
   private let calendar = Calendar.current
@@ -25,134 +28,72 @@ struct HistoryView: View {
     return formatter
   }()
 
-  private var sections: [HistorySection] {
-    let logs = model.history.sorted { $0.start > $1.start }
-    let grouped = Dictionary(grouping: logs) { calendar.startOfDay(for: $0.start) }
-    let dates = grouped.keys.sorted(by: >)
-
-    return dates.map { date in
-      let logsForDate = (grouped[date] ?? []).sorted { $0.start > $1.start }
-      let totalSeconds = logsForDate.reduce(0.0) { $0 + max(0, $1.end.timeIntervalSince($1.start)) }
-      let entries = logsForDate.map { log in
-        HistoryEntry(
-          id: log.id,
-          time: timeFormatter.string(from: log.start),
-          sessionLength: sessionLengthLabel(for: log),
-          timer: timerLabel(for: log),
-          count: countLabel(for: log),
-          imagePaths: imagePaths(for: log)
-        )
-      }
-      return HistorySection(
-        id: date,
-        date: date,
-        label: dateFormatter.string(from: date),
-        totalLabel: sessionLengthLabel(forSeconds: totalSeconds),
-        entries: entries
-      )
-    }
-  }
-
   var body: some View {
     ZStack {
-      HStack(alignment: .top, spacing: 20) {
-        VStack(alignment: .leading, spacing: 16) {
-          Text("Log")
-            .font(.system(size: 20, weight: .bold))
-
-          ScrollView {
-          ScrollViewFinder { scrollView in
-            logScrollView = scrollView
-          }
-          .frame(height: 0)
-
-            if sections.isEmpty {
-              VStack(alignment: .leading, spacing: 8) {
-                Text("No sessions yet.")
-                  .font(.system(size: 14, weight: .semibold))
-                Text("Complete a session to see it listed here.")
-                  .font(.system(size: 12))
-                  .foregroundStyle(palette.muted)
-                Spacer(minLength: 0)
+      if model.historyEnabled {
+        HStack(alignment: .top, spacing: 20) {
+          HistoryLogPane(
+            sections: sections,
+            palette: palette,
+            grid: grid,
+            sectionOffsets: $sectionOffsets,
+            logScrollView: $logScrollView,
+            previousMonthLabel: previousMonthLabel,
+            onLoadPreviousMonth: {
+              if let previous = previousMonth {
+                selectedMonth = previous
               }
-              .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-              .padding(.top, 8)
-            } else {
-              VStack(spacing: 20) {
-                ForEach(sections) { section in
-                  VStack(alignment: .leading, spacing: 12) {
-                    HStack(spacing: 10) {
-                      Text(section.label)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(palette.text)
-                      Spacer()
-                      Text("Total session time: \(section.totalLabel)")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(palette.muted)
-                    }
-                    .padding(.trailing, 12)
-
-                      VStack(spacing: 16) {
-                        ForEach(section.entries) { entry in
-                        HistoryCard(
-                          entry: entry,
-                          palette: palette,
-                          grid: grid,
-                          onStartSession: { imagePath in
-                            model.startSession(with: imagePath)
-                          },
-                          onDeleteRequest: { logId in
-                            pendingDeleteId = logId
-                            pendingDeleteInfo = "\(entry.time) · \(entry.timer) x \(entry.count)"
-                          }
-                        )
-                      }
-                    }
-                    .padding(.trailing, 12)
-                  }
-                  .background(
-                    GeometryReader { proxy in
-                      Color.clear.preference(
-                        key: HistorySectionOffsetKey.self,
-                        value: [section.id: proxy.frame(in: .named("historyScroll")).minY]
-                      )
-                    }
-                  )
-                }
+            },
+            nextMonthLabel: nextMonthLabel,
+            onLoadNextMonth: {
+              if let next = nextMonth {
+                selectedMonth = next
               }
-              .padding(.top, 8)
+            },
+            onStartSession: { imagePath in
+              model.startSession(with: imagePath)
+            },
+            onClearDrawCount: { imagePath in
+              model.clearDrawCount(for: imagePath)
+            },
+            onMissingImage: { imagePath in
+              missingInfo = MissingImageInfo(path: imagePath)
+            },
+            onDeleteRequest: { logId, info in
+              pendingDeleteId = logId
+              pendingDeleteInfo = info
             }
-          }
-          .coordinateSpace(name: "historyScroll")
-          .onPreferenceChange(HistorySectionOffsetKey.self) { offsets in
-            sectionOffsets = offsets
-          }
-          .padding(.trailing, -12)
-          .thinScrollIndicators()
-          .frame(maxHeight: .infinity)
+          )
+
+          HistorySidePanel(
+            palette: palette,
+            logs: model.history,
+            displayedMonth: $selectedMonth,
+            onDateSelected: { date in
+              scrollToDate(date)
+            }
+          )
+            .padding(20)
+            .background(palette.panel)
+            .overlay(Rectangle().stroke(palette.border, lineWidth: 1))
+            .frame(width: 360)
+            .frame(maxHeight: .infinity, alignment: .top)
         }
         .padding(20)
-        .background(palette.panel)
-        .overlay(Rectangle().stroke(palette.border, lineWidth: 1))
-        .frame(maxWidth: .infinity)
-        .frame(maxHeight: .infinity, alignment: .top)
-
-        HistorySidePanel(
-          palette: palette,
-          logs: model.history,
-          onDateSelected: { date in
-            scrollToDate(date)
-          }
-        )
-          .padding(20)
-          .background(palette.panel)
-          .overlay(Rectangle().stroke(palette.border, lineWidth: 1))
-          .frame(width: 360)
-          .frame(maxHeight: .infinity, alignment: .top)
+        .background(palette.background)
+        .frame(maxHeight: .infinity)
+      } else {
+        VStack(spacing: 12) {
+          Text("History Disabled")
+            .font(.system(size: 18, weight: .bold))
+          Text("History logging is currently disabled. You can re-enable it in Settings.")
+            .font(.system(size: 12))
+            .foregroundStyle(palette.muted)
+            .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(palette.background)
       }
-      .padding(20)
-      .background(palette.background)
-      .frame(maxHeight: .infinity)
 
       if let deleteId = pendingDeleteId {
         ConfirmationModal(
@@ -170,7 +111,26 @@ struct HistoryView: View {
             pendingDeleteInfo = ""
           }
         )
+      } else if let info = missingInfo {
+        InfoModal(
+          palette: palette,
+          title: "Image Missing",
+          message: info.message,
+          buttonTitle: "OK",
+          onDismiss: { missingInfo = nil }
+        )
       }
+    }
+    .onAppear {
+      selectedMonth = startOfMonth(for: Date())
+      sections = buildSections(from: model.history, month: selectedMonth)
+    }
+    .onReceive(model.$history) { logs in
+      sections = buildSections(from: logs, month: selectedMonth)
+    }
+    .onChange(of: selectedMonth) { _ in
+      sections = buildSections(from: model.history, month: selectedMonth)
+      scrollToTop()
     }
   }
 
@@ -198,6 +158,76 @@ struct HistoryView: View {
     return paths
   }
 
+  private func buildSections(from logs: [SessionLog], month: Date) -> [HistorySection] {
+    let filtered = logs.filter { calendar.isDate($0.start, equalTo: month, toGranularity: .month) }
+    let sortedLogs = filtered.sorted { $0.start > $1.start }
+    let grouped = Dictionary(grouping: sortedLogs) { calendar.startOfDay(for: $0.start) }
+    let dates = grouped.keys.sorted(by: >)
+
+    return dates.map { date in
+      let logsForDate = (grouped[date] ?? []).sorted { $0.start > $1.start }
+      let totalSeconds = logsForDate.reduce(0.0) { $0 + max(0, $1.end.timeIntervalSince($1.start)) }
+      let entries = logsForDate.map { log in
+        HistoryEntry(
+          id: log.id,
+          time: timeFormatter.string(from: log.start),
+          sessionLength: sessionLengthLabel(for: log),
+          timer: timerLabel(for: log),
+          count: countLabel(for: log),
+          imagePaths: imagePaths(for: log)
+        )
+      }
+      return HistorySection(
+        id: date,
+        date: date,
+        label: dateFormatter.string(from: date),
+        totalLabel: sessionLengthLabel(forSeconds: totalSeconds),
+        entries: entries
+      )
+    }
+  }
+
+  private func startOfMonth(for date: Date) -> Date {
+    let comps = calendar.dateComponents([.year, .month], from: date)
+    return calendar.date(from: comps) ?? date
+  }
+
+  private var previousMonth: Date? {
+    let months = availableMonths
+    guard let index = months.firstIndex(where: { calendar.isDate($0, equalTo: selectedMonth, toGranularity: .month) }) else {
+      return months.first
+    }
+    let nextIndex = index + 1
+    return nextIndex < months.count ? months[nextIndex] : nil
+  }
+
+  private var previousMonthLabel: String? {
+    guard let previousMonth else { return nil }
+    let formatter = DateFormatter()
+    formatter.dateFormat = "LLLL yyyy"
+    return formatter.string(from: previousMonth)
+  }
+
+  private var nextMonth: Date? {
+    let months = availableMonths
+    guard let index = months.firstIndex(where: { calendar.isDate($0, equalTo: selectedMonth, toGranularity: .month) }) else {
+      return months.last
+    }
+    let prevIndex = index - 1
+    return prevIndex >= 0 ? months[prevIndex] : nil
+  }
+
+  private var nextMonthLabel: String? {
+    guard let nextMonth else { return nil }
+    let formatter = DateFormatter()
+    formatter.dateFormat = "LLLL yyyy"
+    return formatter.string(from: nextMonth)
+  }
+
+  private var availableMonths: [Date] {
+    let months = Set(model.history.map { startOfMonth(for: $0.start) })
+    return months.sorted(by: >)
+  }
   private func sessionLengthLabel(for log: SessionLog) -> String {
     sessionLengthLabel(forSeconds: max(0, log.end.timeIntervalSince(log.start)))
   }
@@ -231,6 +261,146 @@ struct HistoryView: View {
     }
   }
 
+  private func scrollToTop() {
+    guard let scrollView = logScrollView else { return }
+    NSAnimationContext.runAnimationGroup { context in
+      context.duration = 0.25
+      context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+      scrollView.contentView.animator().setBoundsOrigin(NSPoint(x: 0, y: 0))
+    } completionHandler: {
+      scrollView.reflectScrolledClipView(scrollView.contentView)
+    }
+  }
+
+}
+
+struct HistoryLogPane: View {
+  let sections: [HistorySection]
+  let palette: Palette
+  let grid: [GridItem]
+  @Binding var sectionOffsets: [Date: CGFloat]
+  @Binding var logScrollView: NSScrollView?
+  let previousMonthLabel: String?
+  let onLoadPreviousMonth: () -> Void
+  let nextMonthLabel: String?
+  let onLoadNextMonth: () -> Void
+  let onStartSession: (String) -> Void
+  let onClearDrawCount: (String) -> Void
+  let onMissingImage: (String) -> Void
+  let onDeleteRequest: (UUID, String) -> Void
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 16) {
+      Text("Log")
+        .font(.system(size: 20, weight: .bold))
+
+      ScrollView {
+        ScrollViewFinder { scrollView in
+          logScrollView = scrollView
+        }
+        .frame(height: 0)
+
+        if sections.isEmpty {
+          VStack(alignment: .leading, spacing: 8) {
+            Text("No sessions yet.")
+              .font(.system(size: 14, weight: .semibold))
+            Text("Complete a session to see it listed here.")
+              .font(.system(size: 12))
+              .foregroundStyle(palette.muted)
+            Spacer(minLength: 0)
+          }
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+          .padding(.top, 8)
+        } else {
+          VStack(spacing: 20) {
+            ForEach(sections) { section in
+              VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 10) {
+                  Text(section.label)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(palette.text)
+                  Spacer()
+                  Text("Total session time: \(section.totalLabel)")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(palette.muted)
+                }
+                .padding(.trailing, 12)
+
+                LazyVStack(spacing: 16) {
+                  ForEach(section.entries) { entry in
+                    HistoryCard(
+                      entry: entry,
+                      palette: palette,
+                      grid: grid,
+                      onStartSession: onStartSession,
+                      onMissingImage: onMissingImage,
+                      onDeleteRequest: { logId in
+                        let info = "\(entry.time) · \(entry.timer) x \(entry.count)"
+                        onDeleteRequest(logId, info)
+                      },
+                      onClearDrawCount: onClearDrawCount
+                    )
+                  }
+                }
+                .padding(.trailing, 12)
+              }
+              .background(
+                GeometryReader { proxy in
+                  Color.clear.preference(
+                    key: HistorySectionOffsetKey.self,
+                    value: [section.id: proxy.frame(in: .named("historyScroll")).minY]
+                  )
+                }
+              )
+            }
+          }
+          .padding(.top, 8)
+        }
+        if previousMonthLabel != nil || nextMonthLabel != nil {
+          HStack(spacing: 12) {
+            if let label = nextMonthLabel {
+              BWButton(
+                title: "Load \(label)",
+                minHeight: 26,
+                fillColor: palette.panelAlt,
+                textColor: palette.muted,
+                borderColor: palette.border,
+                fontSize: 10
+              ) {
+                onLoadNextMonth()
+              }
+            }
+            if let label = previousMonthLabel {
+              BWButton(
+                title: "Load \(label)",
+                minHeight: 26,
+                fillColor: palette.panelAlt,
+                textColor: palette.muted,
+                borderColor: palette.border,
+                fontSize: 10
+              ) {
+                onLoadPreviousMonth()
+              }
+            }
+          }
+          .frame(maxWidth: .infinity, alignment: .center)
+          .padding(.top, 12)
+        }
+      }
+      .coordinateSpace(name: "historyScroll")
+      .onPreferenceChange(HistorySectionOffsetKey.self) { offsets in
+        sectionOffsets = offsets
+      }
+      .padding(.trailing, -12)
+      .thinScrollIndicators()
+      .frame(maxHeight: .infinity)
+    }
+    .padding(20)
+    .background(palette.panel)
+    .overlay(Rectangle().stroke(palette.border, lineWidth: 1))
+    .frame(maxWidth: .infinity)
+    .frame(maxHeight: .infinity, alignment: .top)
+  }
 }
 
 struct HistoryEntry: Identifiable {
@@ -255,7 +425,13 @@ struct HistoryCard: View {
   let palette: Palette
   let grid: [GridItem]
   let onStartSession: (String) -> Void
+  let onMissingImage: (String) -> Void
   let onDeleteRequest: (UUID) -> Void
+  let onClearDrawCount: (String) -> Void
+
+  private var visiblePaths: [String] {
+    entry.imagePaths
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -278,24 +454,14 @@ struct HistoryCard: View {
         .frame(width: 180, alignment: .leading)
 
         LazyVGrid(columns: grid, spacing: 10) {
-          ForEach(entry.imagePaths, id: \.self) { path in
-            ZStack {
-              Rectangle()
-                .fill(palette.previewBackground)
-              ThumbnailView(path: path)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-            .frame(height: 90)
-            .onHover { hovering in
-              if hovering {
-                NSCursor.pointingHand.set()
-              } else {
-                NSCursor.arrow.set()
-              }
-            }
-            .onTapGesture(count: 2) {
-              onStartSession(path)
-            }
+          ForEach(visiblePaths, id: \.self) { path in
+            HistoryThumbnail(
+              palette: palette,
+              path: path,
+              onStartSession: onStartSession,
+              onMissingImage: onMissingImage,
+              onClearDrawCount: onClearDrawCount
+            )
           }
         }
       }
@@ -304,6 +470,119 @@ struct HistoryCard: View {
     .padding(16)
     .background(palette.panel)
     .overlay(Rectangle().stroke(palette.border, lineWidth: 1))
+  }
+}
+
+struct HistoryThumbnail: View {
+  let palette: Palette
+  let path: String
+  let onStartSession: (String) -> Void
+  let onMissingImage: (String) -> Void
+  let onClearDrawCount: (String) -> Void
+
+  @State private var isHovering = false
+
+  private var isMissing: Bool {
+    !FileManager.default.fileExists(atPath: path)
+  }
+
+  var body: some View {
+    ZStack {
+      Rectangle()
+        .fill(palette.previewBackground)
+      ScaledThumbnailView(path: path, maxSize: 180)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    .frame(height: 90)
+    .overlay(Rectangle().stroke(isHovering ? palette.text.opacity(0.6) : Color.clear, lineWidth: 1))
+    .onHover { hovering in
+      isHovering = hovering
+    }
+    .onTapGesture(count: 2) {
+      if isMissing {
+        onMissingImage(path)
+      } else {
+        onStartSession(path)
+      }
+    }
+    .contextMenu {
+      Button("Open in Finder") {
+        NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+      }
+      .disabled(isMissing)
+      Button("Start single session") {
+        onStartSession(path)
+      }
+      .disabled(isMissing)
+      Button("Clear draw-count") {
+        onClearDrawCount(path)
+      }
+      .disabled(isMissing)
+    }
+  }
+}
+
+struct ScaledThumbnailView: View {
+  let path: String
+  let maxSize: CGFloat
+  @State private var image: NSImage? = nil
+  @State private var isMissing: Bool = false
+
+  var body: some View {
+    Group {
+      if let image {
+        Image(nsImage: image)
+          .resizable()
+          .scaledToFit()
+      } else if isMissing {
+        Image(systemName: "questionmark.square.dashed")
+          .font(.system(size: 22, weight: .semibold))
+          .foregroundStyle(Color.secondary)
+      } else {
+        Color.clear
+      }
+    }
+    .onAppear {
+      loadImage()
+    }
+    .onChange(of: path) { _ in
+      loadImage()
+    }
+  }
+
+  private func loadImage() {
+    if let cached = ThumbnailCache.shared.image(for: path, size: maxSize) {
+      image = cached
+      isMissing = false
+      return
+    }
+
+    isMissing = false
+    DispatchQueue.global(qos: .userInitiated).async {
+      let loaded = NSImage(contentsOfFile: path)
+      let scaled = loaded.map { downscale($0, maxSize: maxSize) }
+      if let scaled {
+        ThumbnailCache.shared.set(scaled, for: path, size: maxSize)
+      }
+      DispatchQueue.main.async {
+        image = scaled
+        isMissing = scaled == nil
+      }
+    }
+  }
+
+  private func downscale(_ image: NSImage, maxSize: CGFloat) -> NSImage {
+    let original = image.size
+    let ratio = min(maxSize / original.width, maxSize / original.height, 1)
+    let newSize = NSSize(width: original.width * ratio, height: original.height * ratio)
+    let newImage = NSImage(size: newSize)
+    newImage.lockFocus()
+    image.draw(in: NSRect(origin: .zero, size: newSize),
+               from: NSRect(origin: .zero, size: original),
+               operation: .copy,
+               fraction: 1)
+    newImage.unlockFocus()
+    return newImage
   }
 }
 
@@ -343,17 +622,71 @@ private struct DeleteIconButton: View {
 struct HistorySidePanel: View {
   let palette: Palette
   let logs: [SessionLog]
+  @Binding var displayedMonth: Date
   let onDateSelected: (Date) -> Void
+
+  private let calendar = Calendar.current
 
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
-      UsageCalendar(palette: palette, logs: logs, onDateSelected: onDateSelected)
+      UsageCalendar(palette: palette, logs: logs, displayedMonth: $displayedMonth, onDateSelected: onDateSelected)
 
-      Text("Click on a date to navigate to those sessions")
-        .font(.system(size: 11))
-        .foregroundStyle(palette.muted)
-        .frame(maxWidth: .infinity, alignment: .center)
+      Divider()
+
+      VStack(alignment: .leading, spacing: 8) {
+        Text("Statistics")
+          .font(.system(size: 12, weight: .semibold))
+          .foregroundStyle(palette.muted)
+
+        HStack {
+          Text("Time spent this month")
+            .font(.system(size: 12))
+          Spacer()
+          Text(totalTimeLabel)
+            .font(.system(size: 12))
+        }
+
+        HStack {
+          Text("Average per draw day")
+            .font(.system(size: 12))
+          Spacer()
+          Text(averagePerDayLabel)
+            .font(.system(size: 12))
+        }
+      }
     }
+  }
+
+  private var monthLogs: [SessionLog] {
+    logs.filter { calendar.isDate($0.start, equalTo: displayedMonth, toGranularity: .month) }
+  }
+
+  private var totalTimeSeconds: Double {
+    monthLogs.reduce(0) { $0 + max(0, $1.end.timeIntervalSince($1.start)) }
+  }
+
+  private var totalTimeLabel: String {
+    durationLabel(seconds: totalTimeSeconds)
+  }
+
+  private var averagePerDayLabel: String {
+    let days = Set(monthLogs.map { calendar.startOfDay(for: $0.start) })
+    guard !days.isEmpty else { return "0 min" }
+    let avg = totalTimeSeconds / Double(days.count)
+    return durationLabel(seconds: avg)
+  }
+
+  private func durationLabel(seconds: Double) -> String {
+    let totalMinutes = Int(seconds / 60)
+    if totalMinutes < 1 {
+      return "<1 min"
+    }
+    let hours = totalMinutes / 60
+    let minutes = totalMinutes % 60
+    if hours > 0 {
+      return minutes > 0 ? "\(hours)h \(minutes)m" : "\(hours)h"
+    }
+    return "\(minutes) min"
   }
 }
 
@@ -400,9 +733,9 @@ struct ConfirmationModal: View {
 struct UsageCalendar: View {
   let palette: Palette
   let logs: [SessionLog]
+  @Binding var displayedMonth: Date
   let onDateSelected: (Date) -> Void
 
-  @State private var displayedMonth: Date = Date()
   @Environment(\.colorScheme) private var scheme
 
   private let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 7)
@@ -445,7 +778,7 @@ struct UsageCalendar: View {
           Spacer()
 
           BWButton(title: "Today", minHeight: 24, fontSize: 10) {
-            displayedMonth = Date()
+            displayedMonth = startOfMonth(for: Date())
           }
         }
 
@@ -499,7 +832,7 @@ struct UsageCalendar: View {
 
   private func shiftMonth(_ value: Int) {
     if let next = calendar.date(byAdding: .month, value: value, to: displayedMonth) {
-      displayedMonth = next
+      displayedMonth = startOfMonth(for: next)
     }
   }
 

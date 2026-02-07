@@ -11,6 +11,7 @@ final class AppModel: ObservableObject {
   @Published var prioritizeLowDraw: Bool = true
   @Published var session: SessionState? = nil
   @Published var history: [SessionLog] = []
+  @Published var historyEnabled: Bool = UserDefaults.standard.object(forKey: "gd-history-enabled") == nil ? true : UserDefaults.standard.bool(forKey: "gd-history-enabled")
 
   private let defaultsKey = "gd-folder-path"
   private let allowedExtensions: Set<String> = ["jpg", "jpeg", "png", "webp"]
@@ -23,6 +24,11 @@ final class AppModel: ObservableObject {
     loadHistory()
   }
 
+  func setHistoryEnabled(_ enabled: Bool) {
+    historyEnabled = enabled
+    UserDefaults.standard.set(enabled, forKey: "gd-history-enabled")
+  }
+
   var includedImages: [ImageItem] {
     images.filter { $0.included }
   }
@@ -30,7 +36,10 @@ final class AppModel: ObservableObject {
   var activeImage: ImageItem? {
     guard let session else { return nil }
     let id = session.sequence[session.index]
-    return images.first(where: { $0.id == id })
+    if let match = images.first(where: { $0.id == id }) {
+      return match
+    }
+    return ImageItem(path: id, included: false, drawnCount: 0)
   }
 
   func pickFolder() {
@@ -74,9 +83,15 @@ final class AppModel: ObservableObject {
     saveMetadata()
   }
 
+  func clearDrawCount(for imageId: String) {
+    guard let index = images.firstIndex(where: { $0.id == imageId }) else { return }
+    images[index].drawnCount = 0
+    saveMetadata()
+  }
+
   func adjustCount(_ value: Int) {
     infinite = false
-    count = min(20, max(2, value))
+    count = min(20, max(1, value))
   }
 
   func startSession() {
@@ -104,7 +119,7 @@ final class AppModel: ObservableObject {
   }
 
   func startSession(with imageId: String) {
-    guard images.contains(where: { $0.id == imageId }) else { return }
+    guard FileManager.default.fileExists(atPath: imageId) else { return }
     infinite = true
     let target: SessionTarget = .infinite
 
@@ -340,16 +355,71 @@ final class AppModel: ObservableObject {
     saveHistory()
   }
 
+  func generateDebugHistory(entries: Int) {
+    guard entries > 0 else { return }
+    let now = Date()
+    let pool = images.map(\.id)
+    let presets = [1, 2, 3, 5, 10, 15]
+    var logs: [SessionLog] = []
+    let calendar = Calendar.current
+
+    for _ in 0..<entries {
+      let dayOffset = Int.random(in: 0..<30)
+      let hour = Int.random(in: 6..<22)
+      let minute = Int.random(in: 0..<60)
+      let base = calendar.date(byAdding: .day, value: -dayOffset, to: now) ?? now
+      let start = calendar.date(bySettingHour: hour, minute: minute, second: 0, of: base) ?? base
+      let isInfinite = Bool.random()
+      let isTimed = Bool.random()
+      let minutesPerImage = isTimed ? (presets.randomElement() ?? 1) : 0
+      let count = Int.random(in: 2...25)
+      let totalMinutes = isInfinite ? Int.random(in: 5...60) : max(1, minutesPerImage * count)
+      let end = calendar.date(byAdding: .minute, value: totalMinutes, to: start) ?? start.addingTimeInterval(TimeInterval(totalMinutes * 60))
+
+      var imageIds: [String] = []
+      if !pool.isEmpty {
+        for _ in 0..<count {
+          if let pick = pool.randomElement() {
+            imageIds.append(pick)
+          }
+        }
+      }
+
+      logs.append(
+        SessionLog(
+          id: UUID(),
+          start: start,
+          end: end,
+          minutesPerImage: minutesPerImage,
+          targetCount: isInfinite ? nil : count,
+          isInfinite: isInfinite,
+          isTimed: isTimed,
+          imageIds: imageIds
+        )
+      )
+    }
+
+    history.append(contentsOf: logs)
+    history.sort { $0.start > $1.start }
+    saveHistory()
+  }
+
   func resetEverything() {
     clearHistory()
     clearDrawHistory()
     images = []
     folderPath = ""
+    minutes = 1
+    count = 10
+    infinite = false
+    prioritizeLowDraw = true
+    setHistoryEnabled(true)
     UserDefaults.standard.removeObject(forKey: defaultsKey)
     saveMetadata()
   }
 
   private func finalizeSession(_ session: SessionState) {
+    guard historyEnabled else { return }
     guard !session.shownImages.isEmpty else { return }
     let log = SessionLog(
       id: UUID(),

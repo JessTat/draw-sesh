@@ -7,6 +7,7 @@ struct SetupView: View {
 
   @State private var thumbnailSize: CGFloat = 160
   @State private var customMinutesText: String = "1"
+  @State private var missingInfo: MissingImageInfo? = nil
 
   private let presetMinutes = [1, 2, 3, 5, 10, 15]
 
@@ -19,7 +20,8 @@ struct SetupView: View {
   }
 
   var body: some View {
-    HStack(alignment: .top, spacing: 20) {
+    ZStack {
+      HStack(alignment: .top, spacing: 20) {
       VStack(alignment: .leading, spacing: 16) {
         VStack(alignment: .leading, spacing: 8) {
           HStack {
@@ -88,6 +90,12 @@ struct SetupView: View {
                   },
                   onStartSession: {
                     model.startSession(with: image.id)
+                  },
+                  onMissingImage: { path in
+                    missingInfo = MissingImageInfo(path: path)
+                  },
+                  onClearDrawCount: {
+                    model.clearDrawCount(for: image.id)
                   }
                 )
               }
@@ -168,20 +176,25 @@ struct SetupView: View {
         BWButton(title: "Start Session", minHeight: 44, isSelected: true, expand: true, fontSize: 20, fontWeight: .bold) {
           model.startSession()
         }
-        Text("Double click on any image to start a session with only that image.")
-          .font(.system(size: 11))
-          .foregroundStyle(palette.muted)
-          .frame(maxWidth: .infinity)
-          .multilineTextAlignment(.center)
       }
       .padding(20)
       .background(palette.panel)
       .overlay(Rectangle().stroke(palette.border, lineWidth: 1))
       .frame(width: 360)
     }
-    .padding(20)
-    .background(palette.background)
-    .frame(maxHeight: .infinity)
+      .padding(20)
+      .background(palette.background)
+      .frame(maxHeight: .infinity)
+      if let info = missingInfo {
+        InfoModal(
+          palette: palette,
+          title: "Image Missing",
+          message: info.message,
+          buttonTitle: "OK",
+          onDismiss: { missingInfo = nil }
+        )
+      }
+    }
     .onAppear {
       customMinutesText = "\(model.minutes)"
     }
@@ -205,6 +218,13 @@ struct ImageCard: View {
   let height: CGFloat
   let onIncludeToggle: (Bool) -> Void
   let onStartSession: () -> Void
+  let onMissingImage: (String) -> Void
+  let onClearDrawCount: () -> Void
+
+  private var isMissing: Bool {
+    !FileManager.default.fileExists(atPath: image.path)
+  }
+  @State private var isHovering: Bool = false
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
@@ -215,19 +235,36 @@ struct ImageCard: View {
           .frame(maxWidth: .infinity, maxHeight: .infinity)
       }
       .frame(height: height)
+      .overlay(Rectangle().stroke(isHovering ? palette.text.opacity(0.6) : Color.clear, lineWidth: 1))
       .onHover { hovering in
-        if hovering {
-          NSCursor.pointingHand.set()
-        } else {
-          NSCursor.arrow.set()
-        }
+        isHovering = hovering
       }
       .gesture(
         ExclusiveGesture(
-          TapGesture(count: 2).onEnded { onStartSession() },
+          TapGesture(count: 2).onEnded {
+            if isMissing {
+              onMissingImage(image.path)
+            } else {
+              onStartSession()
+            }
+          },
           TapGesture(count: 1).onEnded { onIncludeToggle(!image.included) }
         )
       )
+      .contextMenu {
+        Button("Open in Finder") {
+          NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: image.path)])
+        }
+        .disabled(isMissing)
+        Button("Start single session") {
+          onStartSession()
+        }
+        .disabled(isMissing)
+        Button("Clear draw-count") {
+          onClearDrawCount()
+        }
+        .disabled(isMissing)
+      }
 
       VStack(alignment: .leading, spacing: 4) {
         HStack {
@@ -316,6 +353,7 @@ struct NoSelectTextField: NSViewRepresentable {
 struct ThumbnailView: View {
   let path: String
   @State private var image: NSImage? = nil
+  @State private var isMissing: Bool = false
 
   var body: some View {
     Group {
@@ -323,6 +361,10 @@ struct ThumbnailView: View {
         Image(nsImage: image)
           .resizable()
           .scaledToFit()
+      } else if isMissing {
+        Image(systemName: "questionmark.square.dashed")
+          .font(.system(size: 22, weight: .semibold))
+          .foregroundStyle(Color.secondary)
       } else {
         Color.clear
       }
@@ -338,9 +380,11 @@ struct ThumbnailView: View {
   private func loadImage() {
     if let cached = ImageCache.shared.image(for: path) {
       image = cached
+      isMissing = false
       return
     }
 
+    isMissing = false
     DispatchQueue.global(qos: .userInitiated).async {
       let loaded = NSImage(contentsOfFile: path)
       if let loaded {
@@ -348,6 +392,7 @@ struct ThumbnailView: View {
       }
       DispatchQueue.main.async {
         image = loaded
+        isMissing = loaded == nil
       }
     }
   }

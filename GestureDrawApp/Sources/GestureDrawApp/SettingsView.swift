@@ -12,35 +12,69 @@ struct SettingsView: View {
     ZStack {
       HStack {
         Spacer()
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 12) {
           Text("Settings")
             .font(.system(size: 20, weight: .bold))
 
           VStack(alignment: .leading, spacing: 10) {
-            Text("Appearance")
-              .font(.system(size: 12, weight: .semibold))
-              .foregroundStyle(palette.muted)
-
-            BWButton(
-              title: "Toggle Light/Dark",
-              minHeight: 24,
-              fillColor: palette.panelAlt,
-              textColor: palette.muted,
-              borderColor: palette.border,
-              fontSize: 10
-            ) {
-              onToggleTheme()
-            }
+            Toggle("Prioritize choosing images that are drawn less", isOn: $model.prioritizeLowDraw)
           }
 
           VStack(alignment: .leading, spacing: 10) {
-            Text("History Actions")
+            Toggle("Light mode", isOn: Binding(
+              get: { theme == .light },
+              set: { _ in onToggleTheme() }
+            ))
+          }
+
+          VStack(alignment: .leading, spacing: 18) {
+            Toggle("Disable history (if you won't use it, just disable it)", isOn: Binding(
+              get: { !model.historyEnabled },
+              set: { newValue in model.setHistoryEnabled(!newValue) }
+            ))
+          }
+
+          Divider()
+
+          Text("About DrawSesh")
+            .font(.system(size: 16, weight: .bold))
+
+          VStack(alignment: .leading, spacing: 10) {
+            Text("DrawSesh is for timed drawing sessions using your local folder of reference images. Right-click images for additional options. All images in sub-folders will be loaded. This app only supports .jpg, .png, and .webp.")
+              .font(.system(size: 12))
+              .foregroundStyle(palette.muted)
+
+            VStack(alignment: .leading, spacing: 4) {
+              Text("Example 90-min figure drawing regiment:")
+                .font(.system(size: 12, weight: .semibold))
+              Text("- 1m x 10")
+              Text("- 2m x 5")
+              Text("- 3m x 5")
+              Text("- 5m x 5")
+              Text("- 10m x 3 or 15m x 2")
+            }
+            .font(.system(size: 12))
+            .foregroundStyle(palette.muted)
+
+            Text("Begin the short intervals by focusing on gesture. As the timer gets longer, introduce rhythms and structure, increasing detail and being intentional with proportions with more time. Take an eye and hand break between every session.")
+              .font(.system(size: 12))
+              .foregroundStyle(palette.muted)
+
+            Text("Create your own schedule that works for you. Date your drawings so you can refer back to them in the future.")
+              .font(.system(size: 12))
+              .foregroundStyle(palette.muted)
+          }
+
+          Divider()
+
+          VStack(alignment: .leading, spacing: 10) {
+            Text("Reset things if problems happen")
               .font(.system(size: 12, weight: .semibold))
               .foregroundStyle(palette.muted)
 
             HStack(spacing: 8) {
               BWButton(
-                title: "Clear History",
+                title: "Clear History Log",
                 minHeight: 24,
                 fillColor: palette.panelAlt,
                 textColor: palette.muted,
@@ -60,7 +94,7 @@ struct SettingsView: View {
                 pendingAction = .resetDrawCount
               }
               BWButton(
-                title: "Reset All",
+                title: "Restore Defaults",
                 minHeight: 24,
                 fillColor: palette.panelAlt,
                 textColor: palette.muted,
@@ -70,44 +104,6 @@ struct SettingsView: View {
                 pendingAction = .resetAll
               }
             }
-          }
-
-          VStack(alignment: .leading, spacing: 10) {
-            Text("Additional Settings")
-              .font(.system(size: 12, weight: .semibold))
-              .foregroundStyle(palette.muted)
-
-            Toggle("Prioritize lesser-drawn images", isOn: $model.prioritizeLowDraw)
-              .toggleStyle(.checkbox)
-              .tint(Color(white: 0.6))
-              .accentColor(Color(white: 0.6))
-          }
-
-          Divider()
-
-          VStack(alignment: .leading, spacing: 10) {
-            Text("How to Use")
-              .font(.system(size: 16, weight: .bold))
-
-            Text("This app is for timed drawing sessions using your local library of reference images.")
-              .font(.system(size: 12))
-              .foregroundStyle(palette.muted)
-
-            VStack(alignment: .leading, spacing: 4) {
-              Text("90min figure drawing session example:")
-                .font(.system(size: 12, weight: .semibold))
-              Text("1m x 10")
-              Text("2m x 5")
-              Text("3m x 5")
-              Text("5m x 5")
-              Text("10m x 3 or 15m x 2")
-            }
-            .font(.system(size: 12))
-            .foregroundStyle(palette.text)
-
-            Text("Begin this session focusing on gestures that capture the action. As the sessions get longer, introduce intentional rhythms and eventually carving out anatomical structures.")
-              .font(.system(size: 12))
-              .foregroundStyle(palette.muted)
           }
         }
         .padding(20)
@@ -163,7 +159,7 @@ enum SettingsAction: String, Identifiable {
     case .resetDrawCount:
       return "Reset Draw Count?"
     case .resetAll:
-      return "Reset All?"
+      return "Restore Defaults?"
     }
   }
 
@@ -174,7 +170,7 @@ enum SettingsAction: String, Identifiable {
     case .resetDrawCount:
       return "This will reset the draw count logged for every image. This information is used to weight the randomization of images towards the lesser-drawn images."
     case .resetAll:
-      return "This will clear history, reset draw counts, and remove the selected folder."
+      return "This will clear history, reset draw counts, remove the selected folder, and restore default settings."
     }
   }
 
@@ -185,7 +181,7 @@ enum SettingsAction: String, Identifiable {
     case .resetDrawCount:
       return "Reset Draw Count"
     case .resetAll:
-      return "Reset All"
+      return "Restore Defaults"
     }
   }
 }

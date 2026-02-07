@@ -87,8 +87,11 @@ struct TopBar: View {
   var body: some View {
     HStack(spacing: 12) {
       VStack(alignment: .leading, spacing: 4) {
-        Text("Drawing Session")
+        Text("DrawSesh")
           .font(.system(size: 18, weight: .bold))
+        Text("For timed drawing sessions")
+          .font(.system(size: 11))
+          .foregroundStyle(palette.muted)
       }
 
       Spacer()

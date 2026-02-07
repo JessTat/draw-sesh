@@ -10,7 +10,6 @@ struct SessionView: View {
   @State private var mouseMonitor: Any?
   @State private var lastMouseMove: Date = Date()
   @State private var controlsVisible: Bool = true
-  @State private var cursorHidden: Bool = false
 
   var body: some View {
     ZStack(alignment: .bottom) {
@@ -55,8 +54,8 @@ struct SessionView: View {
         Spacer()
       }
       .padding(.horizontal, 16)
-      .padding(.vertical, 12)
-      .background(palette.background.opacity(0.9))
+      .padding(.vertical, 24)
+      .background(palette.background)
       .opacity(controlsVisible ? 1 : 0)
       .allowsHitTesting(controlsVisible)
       .animation(.easeInOut(duration: 0.3), value: controlsVisible)
@@ -150,18 +149,10 @@ struct SessionView: View {
       NSEvent.removeMonitor(monitor)
       mouseMonitor = nil
     }
-    if cursorHidden {
-      NSCursor.unhide()
-      cursorHidden = false
-    }
   }
 
   private func registerMouseMove() {
     lastMouseMove = Date()
-    if cursorHidden {
-      NSCursor.unhide()
-      cursorHidden = false
-    }
     if !controlsVisible {
       controlsVisible = true
     }
@@ -171,10 +162,6 @@ struct SessionView: View {
     if Date().timeIntervalSince(lastMouseMove) > 2 {
       if controlsVisible {
         controlsVisible = false
-        if !cursorHidden {
-          NSCursor.hide()
-          cursorHidden = true
-        }
       }
     }
   }
@@ -229,7 +216,7 @@ private struct SessionControlButton: View {
   @State private var isHovering = false
 
   var body: some View {
-    let baseFill = Color.clear
+    let baseFill = palette.background
     let foreground = scheme == .dark ? Color(white: 0.9) : Color.black
     let stroke = scheme == .dark ? Color(white: 0.2) : Color(white: 0.7)
     let hoverOverlay = scheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06)
