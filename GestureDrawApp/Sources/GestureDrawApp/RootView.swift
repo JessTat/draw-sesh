@@ -1,8 +1,10 @@
 import SwiftUI
+import AppKit
 
 enum Screen: String, CaseIterable {
   case setup = "Setup"
   case session = "Session"
+  case history = "History"
 }
 
 struct RootView: View {
@@ -20,7 +22,7 @@ struct RootView: View {
   var body: some View {
     VStack(spacing: 0) {
       if model.screen != .session {
-        TopBar(screen: $model.screen, theme: theme, onToggleTheme: toggleTheme)
+        TopBar(screen: $model.screen, theme: theme, palette: palette, onToggleTheme: toggleTheme)
           .padding(.horizontal, 20)
           .padding(.top, 16)
           .padding(.bottom, 12)
@@ -34,6 +36,8 @@ struct RootView: View {
           SetupView(model: model, palette: palette)
         case .session:
           SessionView(model: model, palette: palette)
+        case .history:
+          HistoryView(model: model, palette: palette)
         }
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -51,6 +55,7 @@ struct RootView: View {
 struct TopBar: View {
   @Binding var screen: Screen
   let theme: AppTheme
+  let palette: Palette
   let onToggleTheme: () -> Void
 
   var body: some View {
@@ -58,18 +63,59 @@ struct TopBar: View {
       VStack(alignment: .leading, spacing: 4) {
         Text("Timed Drawing Session")
           .font(.system(size: 18, weight: .bold))
-        Text("For timed figure drawing sessions")
-          .font(.system(size: 12))
-          .foregroundStyle(.secondary)
       }
 
       Spacer()
 
+      TopTabButton(title: "Session", isSelected: screen == .setup, background: palette.background) {
+        screen = .setup
+      }
+
+      TopTabButton(title: "History", isSelected: screen == .history, background: palette.background) {
+        screen = .history
+      }
+
       BWButton(
         title: theme.label,
+        fillColor: palette.background,
+        borderColor: palette.border,
         systemImage: theme == .dark ? "sun.max" : "moon",
         action: onToggleTheme
       )
+    }
+  }
+}
+
+struct TopTabButton: View {
+  let title: String
+  let isSelected: Bool
+  let background: Color
+  let action: () -> Void
+
+  var body: some View {
+    Button(action: action) {
+      VStack(spacing: 4) {
+        Text(title)
+          .font(.system(size: 13, weight: .semibold))
+          .foregroundStyle(isSelected ? Color.primary : Color.secondary)
+
+        Rectangle()
+          .frame(height: 1)
+          .foregroundStyle(Color.primary)
+          .opacity(isSelected ? 1 : 0)
+      }
+      .frame(width: 100)
+      .padding(.horizontal, 2)
+      .padding(.vertical, 2)
+      .background(background)
+    }
+    .buttonStyle(.plain)
+    .onHover { hovering in
+      if hovering {
+        NSCursor.pointingHand.push()
+      } else {
+        NSCursor.pop()
+      }
     }
   }
 }
@@ -123,9 +169,18 @@ struct BWButton: View {
 
   var body: some View {
     let baseFill = fillColor ?? (scheme == .dark ? Color.black : Color(white: 0.2))
-    let selectedFill = scheme == .dark ? Color(white: 0.85) : Color(white: 0.75)
-    let background = isSelected ? selectedFill : baseFill
-    let foreground = textColor ?? (isSelected ? Color.black : Color(white: 0.9))
+    let selectedFill = scheme == .dark ? Color(white: 0.85) : (fillColor ?? Color(white: 0.2))
+    let unselectedFill = scheme == .dark ? baseFill : (fillColor ?? Color(white: 0.75))
+    let background = isSelected ? selectedFill : unselectedFill
+    let foreground = textColor ?? {
+      if scheme == .dark {
+        return isSelected ? Color.black : Color(white: 0.9)
+      }
+      if fillColor != nil {
+        return Color.black
+      }
+      return isSelected ? Color.white : Color.black
+    }()
     let stroke = borderColor ?? background
 
     let resolvedFontSize = fontSize ?? 13
@@ -150,6 +205,13 @@ struct BWButton: View {
       .overlay(Rectangle().stroke(stroke, lineWidth: 1))
     }
     .buttonStyle(.plain)
+    .onHover { hovering in
+      if hovering {
+        NSCursor.pointingHand.push()
+      } else {
+        NSCursor.pop()
+      }
+    }
   }
 }
 

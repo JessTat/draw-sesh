@@ -54,4 +54,17 @@ struct SessionState {
   var minutesPerImage: Int
   var completedImages: [String]
   var isTimed: Bool
+  var startedAt: Date
+  var shownImages: [String]
+}
+
+struct SessionLog: Identifiable, Codable {
+  let id: UUID
+  let start: Date
+  let end: Date
+  let minutesPerImage: Int
+  let targetCount: Int?
+  let isInfinite: Bool
+  let isTimed: Bool
+  let imageIds: [String]
 }

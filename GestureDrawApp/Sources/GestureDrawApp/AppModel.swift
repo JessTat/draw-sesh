@@ -10,6 +10,7 @@ final class AppModel: ObservableObject {
   @Published var infinite: Bool = false
   @Published var prioritizeLowDraw: Bool = true
   @Published var session: SessionState? = nil
+  @Published var history: [SessionLog] = []
 
   private let defaultsKey = "gd-folder-path"
   private let allowedExtensions: Set<String> = ["jpg", "jpeg", "png", "webp"]
@@ -19,6 +20,7 @@ final class AppModel: ObservableObject {
       folderPath = savedPath
     }
     loadImages(from: folderPath)
+    loadHistory()
   }
 
   var includedImages: [ImageItem] {
@@ -93,7 +95,9 @@ final class AppModel: ObservableObject {
       target: target,
       minutesPerImage: minutes,
       completedImages: [],
-      isTimed: minutes > 0
+      isTimed: minutes > 0,
+      startedAt: Date(),
+      shownImages: [sequence[0]]
     )
     screen = .session
   }
@@ -113,7 +117,9 @@ final class AppModel: ObservableObject {
       target: target,
       minutesPerImage: minutes,
       completedImages: [],
-      isTimed: false
+      isTimed: false,
+      startedAt: Date(),
+      shownImages: [imageId]
     )
     screen = .session
   }
@@ -144,6 +150,7 @@ final class AppModel: ObservableObject {
     if case .count(let limit) = current.target, current.completed >= limit {
       current.status = .paused
       current.remainingSec = 0
+      finalizeSession(current)
       session = nil
       screen = .setup
       return
@@ -154,6 +161,8 @@ final class AppModel: ObservableObject {
       let nextId = pickRandomIncludedId() ?? currentId
       current.sequence.append(nextId)
     }
+    let nextId = current.sequence[current.index]
+    current.shownImages.append(nextId)
     current.remainingSec = current.minutesPerImage * 60
     session = current
   }
@@ -173,6 +182,9 @@ final class AppModel: ObservableObject {
   }
 
   func stopSession() {
+    if let current = session {
+      finalizeSession(current)
+    }
     session = nil
     screen = .setup
   }
@@ -284,6 +296,73 @@ final class AppModel: ObservableObject {
       try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
     }
     return dir.appendingPathComponent("metadata.json")
+  }
+
+  private func historyURL() -> URL {
+    let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    let dir = base.appendingPathComponent("GestureDrawApp", isDirectory: true)
+    if !FileManager.default.fileExists(atPath: dir.path) {
+      try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    }
+    return dir.appendingPathComponent("history.json")
+  }
+
+  private func loadHistory() {
+    let url = historyURL()
+    guard let data = try? Data(contentsOf: url) else {
+      history = []
+      return
+    }
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .iso8601
+    if let logs = try? decoder.decode([SessionLog].self, from: data) {
+      history = logs
+    } else {
+      history = []
+    }
+  }
+
+  private func saveHistory() {
+    let encoder = JSONEncoder()
+    encoder.dateEncodingStrategy = .iso8601
+    guard let data = try? encoder.encode(history) else { return }
+    try? data.write(to: historyURL(), options: .atomic)
+  }
+
+  func clearHistory() {
+    history = []
+    saveHistory()
+  }
+
+  func resetEverything() {
+    clearHistory()
+    clearDrawHistory()
+    images = []
+    folderPath = ""
+    UserDefaults.standard.removeObject(forKey: defaultsKey)
+    saveMetadata()
+  }
+
+  private func finalizeSession(_ session: SessionState) {
+    guard !session.shownImages.isEmpty else { return }
+    let log = SessionLog(
+      id: UUID(),
+      start: session.startedAt,
+      end: Date(),
+      minutesPerImage: session.minutesPerImage,
+      targetCount: {
+        if case .count(let limit) = session.target { return limit }
+        return nil
+      }(),
+      isInfinite: {
+        if case .infinite = session.target { return true }
+        return false
+      }(),
+      isTimed: session.isTimed,
+      imageIds: session.shownImages
+    )
+    history.insert(log, at: 0)
+    saveHistory()
   }
 
   private func loadMetadata() -> [String: ImageRecord] {

@@ -23,7 +23,7 @@ struct SetupView: View {
       VStack(alignment: .leading, spacing: 16) {
         VStack(alignment: .leading, spacing: 8) {
           HStack {
-            Text("Source")
+            Text("Image Library")
               .font(.system(size: 20, weight: .bold))
             Spacer()
             Text("\(model.includedImages.count)/\(model.images.count) images selected")
@@ -33,13 +33,16 @@ struct SetupView: View {
 
           HStack(alignment: .bottom, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
-              TextField("", text: $model.folderPath)
-                .textFieldStyle(.plain)
-                .padding(10)
+              Text(model.folderPath)
+                .font(.system(size: 12))
+                .foregroundStyle(palette.text)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 10)
                 .frame(height: 40)
                 .background(palette.panelAlt)
                 .overlay(Rectangle().stroke(palette.border, lineWidth: 1))
-                .disabled(true)
             }
             BWButton(title: "Choose Folder", isPrimary: true, minHeight: 28) {
               model.pickFolder()
@@ -67,7 +70,7 @@ struct SetupView: View {
           VStack(alignment: .leading, spacing: 8) {
             Text("No images found in this folder.")
               .font(.system(size: 14, weight: .semibold))
-            Text("Add JPG, PNG, or WEBP files to continue.")
+            Text("Choose a folder containing the images you wish to randomly cycle through in this drawing session. This app only supports JPG, PNG, and WEBP files.")
               .font(.system(size: 12))
               .foregroundStyle(palette.muted)
           }
@@ -92,7 +95,7 @@ struct SetupView: View {
             .padding(.top, 8)
           }
           .frame(maxHeight: .infinity)
-          .scrollIndicators(.hidden)
+          .padding(.trailing, -8)
         }
       }
       .padding(20)
@@ -150,19 +153,24 @@ struct SetupView: View {
             .font(.system(size: 13, weight: .semibold))
           HStack(spacing: 10) {
             BWButton(title: "-", minWidth: 24, minHeight: 24) { model.adjustCount(model.count - 1) }
-            Text("\(model.count)")
+            Text(model.infinite ? "∞" : "\(model.count)")
               .font(.system(size: 14, weight: .semibold))
             BWButton(title: "+", minWidth: 24, minHeight: 24) { model.adjustCount(model.count + 1) }
-            Toggle("Infinite", isOn: $model.infinite)
-              .toggleStyle(.checkbox)
+            BWButton(title: "Infinite", minHeight: 24, isSelected: model.infinite) {
+              model.infinite.toggle()
+            }
           }
         }
+
+        Divider()
 
         VStack(alignment: .leading, spacing: 10) {
           Text("Additional Settings")
             .font(.system(size: 13, weight: .semibold))
           Toggle("Prioritize lesser-drawn images", isOn: $model.prioritizeLowDraw)
             .toggleStyle(.checkbox)
+            .tint(Color(white: 0.6))
+            .accentColor(Color(white: 0.6))
         }
 
         Spacer()
@@ -170,6 +178,11 @@ struct SetupView: View {
         BWButton(title: "Start Session", minHeight: 44, isSelected: true, expand: true, fontSize: 20, fontWeight: .bold) {
           model.startSession()
         }
+        Text("Double click on any image to start a session with only that image.")
+          .font(.system(size: 11))
+          .foregroundStyle(palette.muted)
+          .frame(maxWidth: .infinity)
+          .multilineTextAlignment(.center)
       }
       .padding(20)
       .background(palette.panel)
@@ -212,6 +225,13 @@ struct ImageCard: View {
           .frame(maxWidth: .infinity, maxHeight: .infinity)
       }
       .frame(height: height)
+      .onHover { hovering in
+        if hovering {
+          NSCursor.pointingHand.push()
+        } else {
+          NSCursor.pop()
+        }
+      }
       .gesture(
         ExclusiveGesture(
           TapGesture(count: 2).onEnded { onStartSession() },
@@ -232,6 +252,8 @@ struct ImageCard: View {
           ))
           .labelsHidden()
           .toggleStyle(.checkbox)
+          .tint(Color(white: 0.6))
+          .accentColor(Color(white: 0.6))
         }
 
         if image.drawnCount > 0 {

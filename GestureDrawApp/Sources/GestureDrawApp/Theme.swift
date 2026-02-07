@@ -32,11 +32,11 @@ enum AppTheme: String, CaseIterable {
       )
     case .light:
       return Palette(
-        background: Color(white: 0.92),
-        panel: Color(white: 0.92),
-        panelAlt: Color(white: 0.9),
-        previewBackground: Color(white: 0.84),
-        border: Color(white: 0.82),
+        background: Color(white: 0.86),
+        panel: Color(white: 0.86),
+        panelAlt: Color(white: 0.84),
+        previewBackground: Color(white: 0.8),
+        border: Color(white: 0.78),
         text: .black,
         muted: Color(white: 0.35)
       )
