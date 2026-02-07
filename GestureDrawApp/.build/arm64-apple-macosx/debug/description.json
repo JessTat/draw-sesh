@@ -31,6 +31,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/HistoryView.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/Models.swift"
         },
         {
@@ -60,6 +64,7 @@
       "objects" : [
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/AppModel.swift.o",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/GestureDrawApp.swift.o",
+        "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/HistoryView.swift.o",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/Models.swift.o",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/RootView.swift.o",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/SessionView.swift.o",
@@ -121,6 +126,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/HistoryView.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/Models.swift.o"
         },
         {
@@ -151,6 +160,7 @@
       "sources" : [
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/AppModel.swift",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/GestureDrawApp.swift",
+        "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/HistoryView.swift",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/Models.swift",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/RootView.swift",
         "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/SessionView.swift",
@@ -176,6 +186,7 @@
       "-c",
       "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/AppModel.swift",
       "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/GestureDrawApp.swift",
+      "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/HistoryView.swift",
       "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/Models.swift",
       "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/RootView.swift",
       "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/SessionView.swift",

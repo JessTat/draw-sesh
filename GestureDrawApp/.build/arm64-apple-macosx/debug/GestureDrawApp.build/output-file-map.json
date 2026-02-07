@@ -14,6 +14,12 @@
     "swiftmodule": "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/GestureDrawApp~partial.swiftmodule",
     "swift-dependencies": "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/GestureDrawApp.swiftdeps"
   },
+  "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/HistoryView.swift": {
+    "dependencies": "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/HistoryView.d",
+    "object": "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/HistoryView.swift.o",
+    "swiftmodule": "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/HistoryView~partial.swiftmodule",
+    "swift-dependencies": "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/HistoryView.swiftdeps"
+  },
   "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/Sources/GestureDrawApp/Models.swift": {
     "dependencies": "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/Models.d",
     "object": "/Users/jess/Projects/26-01 Figure Drawing/GestureDrawApp/.build/arm64-apple-macosx/debug/GestureDrawApp.build/Models.swift.o",
