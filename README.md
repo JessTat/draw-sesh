@@ -1,5 +1,5 @@
 # DrawSesh
-DrawSesh is a mac app for timed drawing sessions, using your own references from a designated local folder. I made this for my own figure-drawing sessions, but since you can set what images are used, you can use it to practice drawing whatever you want: portraits, animals, fabrics, etc.
+DrawSesh is a mac app for timed drawing sessions, using your own references from your local folders. I made this for my own figure-drawing sessions, but since you can set what images are used, you can use it to practice drawing whatever you want: portraits, animals, fabrics, etc.
 
 **Features**
 - Configure session time and image count (i.e. 1 min gestures x 10 images) — img 1
@@ -21,14 +21,14 @@ DrawSesh is a mac app for timed drawing sessions, using your own references from
 - Xcode 15+ or Swift 5.9 toolchain
 
 **Instructions**
-1. Download `DrawSesh.zip` from GitHub Releases.
+1. Get the latest Release on the right-hand side of this page, scroll down, and download `DrawSesh.zip`.
 2. Unzip and drag `DrawSesh.app` to `Applications` (optional but recommended).
-3. Try to launch it **(It will give you a warning. See below)**
+3. Try to launch it **(It will give you a warning)**
 4. Go into System Settings → Privacy & Security → Scroll down to see "DrawSesh was blocked to protect your Mac"
 5. Click Open Anyway → Open Anyway → Allow it (password/fingerprint/etc)
 
 ## How to Use
-1. Create your own folder of reference images to draw from
+1. Create your own folder of reference images to draw from (.jpg, .png, .webp)
 2. Launch the app, click **Choose Folder** to select your reference image folder
 4. Adjust your session settings and start your session
 5. Draw, draw, draw!
@@ -36,18 +36,18 @@ DrawSesh is a mac app for timed drawing sessions, using your own references from
 
 # Artist Resources
 **Where to Source Reference Images**
-- www.proko.com/tools (Paid, has a built-in tool you should use, has some free downloadable resources)
-- www.photo-reference-for-comic-artists.com/ (Some paid)
-- www.deviantart.com/theposearchives
-- Pinterest, screenshots, life, etc! Build your library every time you come across something useful
+- [Proko Tools](www.proko.com/tools) (Paid, has a built-in tool you should use, has some free downloadable resources)
+- [Photo Reference for Comic Artists](www.photo-reference-for-comic-artists.com/) Some paid
+- [The Pose Archives](www.deviantart.com/theposearchives)
+- Pinterest, screenshots, life, etc! Refine your library every time you come across something useful
 
 **Drawing Tips**
 
 Proko features a lot of guests that share their own methods of figure drawing. For short poses, focus on capturing the force and movement of the image — the "gesture" of your image. As the timer increases, use straight, curved, and S-lines to create shapes that reinforce your gesture.
-- Proko using seals to demonstrate simple lines that will help with your gesture: https://www.youtube.com/watch?v=2fl5LYouyoY
-- Michael Hampton on how simple gestures need to be: https://www.youtube.com/watch?v=tSyGOZjTs5A
-- Proko on interesting shapes and rhythms: https://www.proko.com/course-lesson/draw-any-pose-from-any-angle-rhythms
-- Mike Mattesi's on dynamic poses via FORCE: https://www.youtube.com/watch?v=14yBwKaBY48
+- Proko using seals to demonstrate simple lines that will help with your gesture: [Youtube](https://www.youtube.com/watch?v=2fl5LYouyoY)
+- Michael Hampton on how simple gestures need to be: [Youtube](https://www.youtube.com/watch?v=tSyGOZjTs5A)
+- Proko on interesting shapes and rhythms: [Youtube](https://www.proko.com/course-lesson/draw-any-pose-from-any-angle-rhythms)
+- Mike Mattesi's on dynamic poses via FORCE: [Youtube](https://www.youtube.com/watch?v=14yBwKaBY48)
 
 # Nerd Stuff
 
@@ -71,7 +71,9 @@ The app bundle will be at `GestureDrawApp/dist/DrawSesh.app`.
 
 
 **Data & Privacy**
+
 All data stays on your machine. The app only reads image files you select and stores session history locally.
 
 **License**
+
 MIT. See `LICENSE`.
