@@ -12,7 +12,7 @@ DrawSesh is a mac app for timed drawing sessions, using your own references from
 - Xcode 15+ or Swift 5.9 toolchain
 
 ## How to Install
-*This build is unsigned/notarized because I'm not paying Apple $100/yr for a license. macOS will show a warning the first time you open it.
+*This build is unsigned/notarized because I'm not paying Apple $100/yr for a license. macOS will show a warning the first time you open it.*
 
 1. Download `DrawSesh.zip` from GitHub Releases.
 2. Unzip and drag `DrawSesh.app` to `Applications` (optional but recommended).
@@ -27,7 +27,7 @@ DrawSesh is a mac app for timed drawing sessions, using your own references from
 5. Draw, draw, draw!
 6. Take a break and move onto the next session
 
-## Resources
+# Artist Resources
 ### Where to Source Reference Images
 - www.proko.com/tools (Paid, has a built-in tool you should use, has some free downloadable resources)
 - www.photo-reference-for-comic-artists.com/ (Some paid)
