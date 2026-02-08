@@ -1,6 +1,8 @@
 # DrawSesh
 **Overview**
-DrawSesh is a mac app for timed drawing sessions, using your own references from a designated local folder. I made this for my own figure-drawing sessions, so it does exactly what I need it to:
+DrawSesh is a mac app for timed drawing sessions, using your own references from a designated local folder. I made this for my own figure-drawing sessions, but since you can set what images are used, you can use it to practice drawing whatever you want: portraits, animals, fabrics, etc.
+
+**Features**
 - Configure session time and pose count (i.e. 1 min gestures x 10 images) — img 1
 - Spotlights a random image from your folder; controllable via keyboard navigation — img 2
 - History log to reference past sessions and how often/long you draw — img 3
