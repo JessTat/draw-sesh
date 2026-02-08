@@ -8,9 +8,9 @@ DrawSesh is a mac app for timed drawing sessions, using your own references from
 - History log to reference past sessions and how often/long you draw — img 3
 - Weighted randomization to favour images you don't seen often
 
-<img width="300" src="https://github.com/user-attachments/assets/c1ea5ce8-0de1-461b-8b39-d186d4c37e1a"/>
-<img width="300" src="https://github.com/user-attachments/assets/0cd3de59-60b5-4cb8-b2ce-b37fe13a26e9"/>
-<img width="300" src="https://github.com/user-attachments/assets/c5a879a4-d6bb-4375-99dc-4505ad492357"/>
+<img width="400" src="https://github.com/user-attachments/assets/c1ea5ce8-0de1-461b-8b39-d186d4c37e1a"/>
+<img width="400" src="https://github.com/user-attachments/assets/0cd3de59-60b5-4cb8-b2ce-b37fe13a26e9"/>
+<img width="400" src="https://github.com/user-attachments/assets/c5a879a4-d6bb-4375-99dc-4505ad492357"/>
 
 ## How to Install
 *This build is unsigned/notarized which means it'll give you an error because it's not an official Mac app. It's not official because I'm not paying Apple $100/yr for a license. macOS will show a warning the first time you open it. I promise it's not a virus.*
