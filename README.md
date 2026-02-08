@@ -1,19 +1,23 @@
 # DrawSesh
 **Overview**
 DrawSesh is a mac app for timed drawing sessions, using your own references from a designated local folder. I made this for my own figure-drawing sessions, so it does exactly what I need it to:
-- Spotlights a random image from your folder
-- Configure session time and pose count (i.e. 1 min gestures x 10 images)
-- History log to reference past sessions and how often/long you draw
+- Configure session time and pose count (i.e. 1 min gestures x 10 images) — img 1
+- Spotlights a random image from your folder; controllable via keyboard navigation — img 2
+- History log to reference past sessions and how often/long you draw — img 3
 - Weighted randomization to favour images you don't seen often
-- Keyboard-navigation
+
+<img width="300" src="https://github.com/user-attachments/assets/c1ea5ce8-0de1-461b-8b39-d186d4c37e1a"/>
+<img width="300" src="https://github.com/user-attachments/assets/0cd3de59-60b5-4cb8-b2ce-b37fe13a26e9"/>
+<img width="300" src="https://github.com/user-attachments/assets/c5a879a4-d6bb-4375-99dc-4505ad492357"/>
+
+## How to Install
+*This build is unsigned/notarized which means it'll give you an error because it's not an official Mac app. It's not official because I'm not paying Apple $100/yr for a license. macOS will show a warning the first time you open it. I promise it's not a virus.*
 
 **Requirements**
 - macOS 13 or later
 - Xcode 15+ or Swift 5.9 toolchain
 
-## How to Install
-*This build is unsigned/notarized because I'm not paying Apple $100/yr for a license. macOS will show a warning the first time you open it.*
-
+**Instructions**
 1. Download `DrawSesh.zip` from GitHub Releases.
 2. Unzip and drag `DrawSesh.app` to `Applications` (optional but recommended).
 3. Try to launch it **(It will give you a warning. See below)**
@@ -28,13 +32,14 @@ DrawSesh is a mac app for timed drawing sessions, using your own references from
 6. Take a break and move onto the next session
 
 # Artist Resources
-### Where to Source Reference Images
+**Where to Source Reference Images**
 - www.proko.com/tools (Paid, has a built-in tool you should use, has some free downloadable resources)
 - www.photo-reference-for-comic-artists.com/ (Some paid)
 - www.deviantart.com/theposearchives
 - Pinterest, screenshots, life, etc! Build your library every time you come across something useful
 
-### Drawing Tips
+**Drawing Tips**
+
 Proko features a lot of guests that share their own methods of figure drawing. For short poses, focus on capturing the force and movement of the image — the "gesture" of your image. As the timer increases, use straight, curved, and S-lines to create shapes that reinforce your gesture.
 - Proko using seals to demonstrate simple lines that will help with your gesture: https://www.youtube.com/watch?v=2fl5LYouyoY
 - Michael Hampton on how simple gestures need to be: https://www.youtube.com/watch?v=tSyGOZjTs5A
