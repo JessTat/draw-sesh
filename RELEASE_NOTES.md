@@ -14,4 +14,4 @@
 3. First launch: Right‑click the app → **Open** → **Open**.
 
 **Notes**
-This build is unsigned/notarized. macOS will show a warning the first time you open it.
+This build is ad‑hoc signed but not notarized. macOS will show an “unidentified developer” warning the first time you open it. Use right‑click → **Open** to proceed.
